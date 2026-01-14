@@ -9,6 +9,7 @@
     exec bash
 
 Настройка репозиториев, заменяем ***.debina.org** на **mirror.yandex.ru** в **/etc/apt/sources.list**
+
 Далее добавлем в **/etc/apt/apt.conf.d/90-proxy.conf**
 
     Acquire::http::Proxy "http://proxy.tech.skills:3128";
