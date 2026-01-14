@@ -49,7 +49,7 @@
 
     127.0.0.1      out-cli.rea26.skills out-cli
 
-Настройка репозиториев, заменяем ***stable** на **frozen** и указываем версию **1.8.1** в **/etc/apt/sources.list**
+Настройка репозиториев, заменяем **stable** на **frozen** и указываем версию **1.8.1** в **/etc/apt/sources.list**
 
     deb https://dl.astralinux.ru/astra/frozen/1.8_x86-64/1.8.1/main-repository/     1.8_x86-64 main contrib non-free non-free-firmware
     deb https://dl.astralinux.ru/astra/frozen/1.8_x86-64/1.8.1/extended-repository/ 1.8_x86-64 main contrib non-free non-free-firmware
