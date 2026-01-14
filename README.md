@@ -11,6 +11,10 @@
     nano /root/.bashrc /etc/bash.bashrc
     exec bash
 
+сразу меняем debian на имя пк в **/etc/hosts**
+
+    127.0.0.1       isp-srv.rea26.skills isp-srv
+
 Настройка репозиториев, заменяем ***.debina.org** на **mirror.yandex.ru** в **/etc/apt/sources.list**
 
 Далее добавлем в **/etc/apt/apt.conf.d/90-proxy.conf**
