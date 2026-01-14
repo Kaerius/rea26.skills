@@ -35,3 +35,28 @@
     apt update
     apt install bind9 curl
 Пакет **wget** **bind9-host** уже установлены
+
+
+Продолжаем с **OUT-CLI**
+
+Настройка имени:
+
+    hostnamectl set-hostname out-cli.rea26.skills
+    nano /root/.bashrc /etc/bash.bashrc
+    exec bash
+
+Настройка репозиториев, заменяем ***stable** на **frozen** и указываем версию **1.8.1** в **/etc/apt/sources.list**
+
+    deb https://dl.astralinux.ru/astra/frozen/1.8_x86-64/1.8.1/main-repository/     1.8_x86-64 main contrib non-free non-free-firmware
+    deb https://dl.astralinux.ru/astra/frozen/1.8_x86-64/1.8.1/extended-repository/ 1.8_x86-64 main contrib non-free non-free-firmware
+
+Далее добавлем в **/etc/apt/apt.conf.d/90-proxy.conf**
+
+    Acquire::http::Proxy "http://proxy.tech.skills:3128";
+    Acquire::https::Proxy "http://proxy.tech.skills:3128";
+
+и нужно в графике через NetworkManager добавить дополнительный DNS сервер 10.113.38.139, заем презапускаем подключения.
+
+Проверяем что инет у нас появился и репозитрии подтянулись
+    apt update
+    apt install curl wget bind9-host
