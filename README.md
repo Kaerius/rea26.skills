@@ -15,9 +15,11 @@
     Acquire::https::Proxy "http://proxy.tech.skills:3128";
 
 Далее нужно добавить в /etc/dhcpcd.conf в конец строку, чтобы разрешались имена **tech.skills**
+
     static domain_name_servers=10.113.38.139 192.168.122.1
 
 Устанавливаем софт
+
     apt update
     apt install bind9 curl mc
 Пакет **wget** **bind9-host** уже установлены
