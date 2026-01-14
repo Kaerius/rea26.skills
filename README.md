@@ -22,7 +22,7 @@
 
     static domain_name_servers=10.113.38.139 192.168.122.1
 
-И рестартим службу чтобы ве заработало
+И рестартим службу чтобы всё заработало
 
     systemctl restart networking.service
 
