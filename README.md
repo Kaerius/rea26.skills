@@ -33,9 +33,13 @@
 Устанавливаем софт
 
     apt update
-    apt install bind9 curl
+    apt install bind9 curl openssh-server
 Пакет **wget** **bind9-host** уже установлены
 
+Настриваем доступ оп ssh
+
+    adduser kda
+    usermod -aG sudo kda
 
 Продолжаем с **OUT-CLI**
 
