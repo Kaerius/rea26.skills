@@ -14,7 +14,7 @@
     Acquire::http::Proxy "http://proxy.tech.skills:3128";
     Acquire::https::Proxy "http://proxy.tech.skills:3128";
 
-Далее нужно добавить в /etc/dhcpcd.conf в конец строку, чтобы разрешались имена **tech.skills**
+Далее нужно добавить в **/etc/dhcpcd.conf** в конец строку, чтобы разрешались имена **tech.skills**
 
     static domain_name_servers=10.113.38.139 192.168.122.1
 
