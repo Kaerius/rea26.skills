@@ -29,5 +29,5 @@
 Устанавливаем софт
 
     apt update
-    apt install bind9 curl mc
+    apt install bind9 curl
 Пакет **wget** **bind9-host** уже установлены
