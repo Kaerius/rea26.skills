@@ -22,6 +22,10 @@
 
     static domain_name_servers=10.113.38.139 192.168.122.1
 
+И рестартим службу чтобы ве заработало
+
+    systemctl restart networking.service
+
 Устанавливаем софт
 
     apt update
