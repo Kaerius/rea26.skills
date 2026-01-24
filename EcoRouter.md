@@ -97,44 +97,6 @@ interface loopback.0
 exit
 ```
 
-## Включаем LDP
-### mpls-gw-core
-```bash
-router ldp
- targeted-peer ipv4 2.2.2.2
-  exit-targeted-peer-mode
- targeted-peer ipv4 3.3.3.3
-  exit-targeted-peer-mode
- transport-address ipv4 1.1.1.1
- ldp label preserve
-exit
-```
-
-### mpls-gw-br
-```bash
-router ldp
- targeted-peer ipv4 3.3.3.3
-  exit-targeted-peer-mode
- transport-address ipv4 2.2.2.2
-exit
-```
-
-### mpls-gw-cr
-```bash
-router ldp
- targeted-peer ipv4 2.2.2.2
-  exit-targeted-peer-mode
- transport-address ipv4 3.3.3.3
-exit
-```
-
-## Включаем LDP на loopback на всех роутерах
-```bash
-interface loopback.0
- ldp enable ipv4
-exit
-```
-
 ## Настройка интерфейсов
 ### mpls-gw-core
 ```bash
@@ -213,40 +175,109 @@ exit
 ```
 
 
-
-
-
-
-
-## Включаем BGP
-используем 65001
-
-### mpls-gw-core
+Проверяем что получилось
+Проверяем со всех роутеров, в примере данные с core
 ```bash
-router bgp 65001
- bgp router-id 1.1.1.1
- neighbor 2.2.2.2 remote-as 65001
- neighbor 2.2.2.2 default-originate
- neighbor 3.3.3.3 remote-as 65001
- neighbor 3.3.3.3 default-originate
-exit
+show ip ospf neighbor
+```
+```bash
+
+Total number of full neighbors: 2
+OSPF process 1 VRF(default):
+Neighbor ID     Pri   State            Dead Time   Address         Interface           Instance ID
+2.2.2.2           1   Full/DR          00:00:32    10.0.12.2       ge0_to_br               0
+3.3.3.3           1   Full/DR          00:00:36    10.0.13.2       ge1_to_cr               0
 ```
 
+```bash
+show ip route ospf
+```
+```bash
+IP Route Table for VRF "default"
+O       2.2.2.2/32 [110/11] via 10.0.12.2, ge0_to_br, 01:15:26
+O       3.3.3.3/32 [110/11] via 10.0.13.2, ge1_to_cr, 01:15:17
+
+Gateway of last resort is not set
+```
+
+Проверяем пинги соседей с core, должны проходить
+```bash
+ping 2.2.2.2
+```
+```bash
+PING 2.2.2.2 (2.2.2.2) 56(84) bytes of data.
+64 bytes from 2.2.2.2: icmp_seq=1 ttl=64 time=15.6 ms
+```
+
+```bash
+ping 3.3.3.3
+```
+```bash
+PING 3.3.3.3 (3.3.3.3) 56(84) bytes of data.
+64 bytes from 3.3.3.3: icmp_seq=1 ttl=64 time=18.9 ms
+```
+
+## Включаем LDP
+### mpls-gw-core
+```bash
+router ldp
+ targeted-peer ipv4 2.2.2.2
+  exit-targeted-peer-mode
+ targeted-peer ipv4 3.3.3.3
+  exit-targeted-peer-mode
+ transport-address ipv4 1.1.1.1
+ ldp label preserve
+exit
+```
 
 ### mpls-gw-br
 ```bash
-router bgp 65001
- bgp router-id 2.2.2.2
- neighbor 1.1.1.1 remote-as 65001
- neighbor 3.3.3.3 remote-as 65001
+router ldp
+ targeted-peer ipv4 3.3.3.3
+  exit-targeted-peer-mode
+ transport-address ipv4 2.2.2.2
 exit
 ```
+
 ### mpls-gw-cr
 ```bash
-router bgp 65001
- bgp router-id 3.3.3.3
- neighbor 1.1.1.1 remote-as 65001
- neighbor 2.2.2.2 remote-as 65001
+router ldp
+ targeted-peer ipv4 2.2.2.2
+  exit-targeted-peer-mode
+ transport-address ipv4 3.3.3.3
+exit
+```
+
+## Включаем LDP 
+на loopback на всех роутерах
+```bash
+interface loopback.0
+ ldp enable ipv4
+exit
+```
+
+### mpls-gw-core
+```bash
+interface ge0_to_br
+ ldp enable ipv4
+exit
+
+interface ge1_to_cr
+ ldp enable ipv4
+exit
+```
+
+### mpls-gw-br
+```bash
+interface ge2_to_core
+ ldp enable ipv4
+exit
+```
+
+### mpls-gw-cr
+```bash
+interface ge2_to_core
+ ldp enable ipv4
 exit
 ```
 
@@ -280,7 +311,194 @@ exit
 ```
 
 
+## Проверка MPLS + LDP
+
+show mpls ldp neighbor                 # Должны быть соседи по всем интерфейсам
+show mpls ldp bindings                 # Должны быть записи для 1.1.1.1, 2.2.2.2, 3.3.3.3
+show mpls forwarding-table             # Должны быть записи типа "Pop" или "Swap"
+
+```bash
+show mpls ldp neighbor
+```
+Должны быть соседи по всем интерфейсам
+```bash
+IP Address                 Intf Name    Holdtime   LDP-Identifier
+10.0.12.2                     ge0_to_br   15         2.2.2.2:0
+10.0.13.2                     ge1_to_cr   15         3.3.3.3:0
+```
+
+```bash
+show mpls ldp discovery 
+```
+Должны быть записи для 1.1.1.1, 2.2.2.2, 3.3.3.3
+```bash
+ge0_to_br    ge1_to_cr    ge2_to_inet  loopback.0   
+mpls-gw-core.rea26.ru#show mpls ldp discovery 
+Id      Interface       LDP Identifier          LDP Enabled     Version Merge Capability
+6       loopback.0      1.1.1.1:0              Disabled IPv4    Merge capable
+7       ge0_to_br       1.1.1.1:0              Enabled  IPv4    Merge capable
+8       ge1_to_cr       1.1.1.1:0              Enabled  IPv4    Merge capable
+9       ge2_to_inet     1.1.1.1:0              Disabled         N/A
+```
+```bash
+show mpls forwarding-table
+```
+Должны быть записи типа "Pop" или "Swap"
+```bash
+Codes: > - installed FTN, * - selected FTN, p - stale FTN,
+       B - BGP FTN, K - CLI FTN,
+       L - LDP FTN, R - RSVP-TE FTN, S - SNMP FTN, I - IGP-Shortcut,
+       U - unknown FTN
+
+Code    FEC                 FTN-ID    Tunnel-id   Pri   LSP-Type        Out-Label    Out-Intf       Nexthop
+L>      2.2.2.2/32          1         0           Yes   LSP_DEFAULT     3            ge0_to_br     10.0.12.2
+L>      3.3.3.3/32          2         0           Yes   LSP_DEFAULT     3            ge1_to_cr     10.0.13.2
+```
+
+```bash
+traceroute 2.2.2.2 
+```
+```bash
+traceroute to 2.2.2.2 (2.2.2.2), 30 hops max, 60 byte packets
+ 1  2.2.2.2 (2.2.2.2)  27.954 ms  27.820 ms  27.735 ms
+```
 
 
+## Включаем BGP
+Используем BGP AS 65001 на всех трёх
+
+### mpls-gw-core
+```bash
+router bgp 65001
+ bgp router-id 1.1.1.1
+ neighbor 2.2.2.2 remote-as 65001
+ neighbor 2.2.2.2 default-originate
+ neighbor 3.3.3.3 remote-as 65001
+ neighbor 3.3.3.3 default-originate
+exit
+```
+
+
+### mpls-gw-br
+```bash
+router bgp 65001
+ bgp router-id 2.2.2.2
+ neighbor 1.1.1.1 remote-as 65001
+ neighbor 3.3.3.3 remote-as 65001
+exit
+```
+### mpls-gw-cr
+```bash
+router bgp 65001
+ bgp router-id 3.3.3.3
+ neighbor 1.1.1.1 remote-as 65001
+ neighbor 2.2.2.2 remote-as 65001
+exit
+```
+
+
+### Проверка
+```bash
+show ip bgp summary
+
+```
+```bash
+BGP router identifier 1.1.1.1, local AS number 65001
+BGP table version is 1
+0 BGP AS-PATH entries
+0 BGP community entries
+
+Neighbor        V    AS     MsgRcv    MsgSen    TblVer  InQ   OutQ   Up/Down   State/PfxRcd
+-------------------------------------------------------------------------------------------
+2.2.2.2         4    65001  180       180       1       0     0      01:29:02     0
+3.3.3.3         4    65001  179       179       1       0     0      01:28:56     0
+
+Total number of neighbors 2
+
+Total number of Established sessions 2
+```
+
+```bash
+show vpls-instance detail office-lan
+```
+Состояние peer должно быть Up (не Dn!)
+```bash
+Virtual Private LAN Service Instance: office-lan, ID: 100
+ SIG-Protocol: LDP
+ Learning: Enabled
+ Group ID: 0
+ Configured MTU: 9710
+ Description: none
+ Operating mode: Raw
+ Configured connections:
+  Port ge0 Service-instance TO_HUB
+  Port ge1 Service-instance TO_CR-CLI
+ Mesh Peers:  2.2.2.2 (Up)
+mpls-gw-cr.rea26.ru>
+```
+
+
+```bash
+show vpls mac-table office-lan
+```
+После подключения клиентов — должны появиться MAC
+```bash
+ VPLS Aging time is 60 sec
+ 
+    L2 Address               AC / Peer               Type        VLAN     Age 
+ ---------------- ------------------------------- ---------- ----------- -----
+  5254.006d.0954  ge0.TO_HUB                       SI                      28     
+```
+
+
+## Выход в «Интернет» (не работает!)
+Настроить выход в инернет для клиентов.
+
+На BR повесить интерфейс с адресом 192.168.1.1/24 и включит его и все клиенты его не видят... 
+
+но он пигуется только с роутера
+```bash
+interface irb100
+ ip address 192.168.1.1/24
+ no shutdown
+exit
+```
+
+
+На CORE создаем пулл и включаем NAT
+```bash
+ip nat pool OFFICE 192.168.1.1-192.168.1.255
+ip nat source dynamic inside-to-outside pool OFFICE overload interface ge2_to_inet 
+
+interface ge2_to_inet
+ ip nat outside
+exit
+
+interface ge1_to_cr
+ ip nat inside
+exit
+
+interface ge0_to_br
+ ip nat inside
+exit
+```
+
+```bash
+```
+
+## Настройка безопастности (Сделать)
+Испя пользователя пароль, активация доступа по SSh
+```bash
+```
+
+## Настройка SNMPv3 (Сделать)
+Получение данных по SNMPv3 с CR, но по задани нужно на всех
+```bash
+```
+
+## TFTP Backup (Сделать)
+Автоматизировать скидывание конфигов на TFTP сервер
+```bash
+```
 
 
