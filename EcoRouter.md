@@ -467,6 +467,23 @@ exit
 ```
 
 ### mpls-gw-br и mpls-gw-cr
+Добавлем новый инстанс TO_INET и связываем его в VLAN 5
+```bash
+port ge0
+ service-instance TO_INET
+  encapsulation dot1q 5
+  rewrite pop 1
+ exit
+exit
+
+port ge1
+ service-instance TO_INET
+  encapsulation dot1q 5
+  rewrite pop 1
+ exit
+exit
+```
+
 Присоеденится к MPLS и добавить сеть в BGP
 ```bash
 vpls-instance INET 10
@@ -485,24 +502,6 @@ router bgp 65001
 exit
 ```
 
-### mpls-gw-br mpls-gw-cr
-Настройка портов на mpls-gw-cr примерно также
-Добавлем новый инстанс TO_INET и связываем его в VLAN 5
-```bash
-port ge0
- service-instance TO_INET
-  encapsulation dot1q 5
-  rewrite pop 1
- exit
-exit
-
-port ge1
- service-instance TO_INET
-  encapsulation dot1q 5
-  rewrite pop 1
- exit
-exit
-```
 
 ### server
 /etc/network/interfaces
