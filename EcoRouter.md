@@ -485,22 +485,17 @@ router bgp 65001
 exit
 ```
 
-### mpls-gw-br
+### mpls-gw-br mpls-gw-cr
 Настройка портов на mpls-gw-cr примерно также
+Добавлем новый инстанс TO_INET и связываем его в VLAN 5
 ```bash
 port ge0
- mtu 9728
- service-instance TO_HUB_BR
-  encapsulation untagged
  service-instance TO_INET
   encapsulation dot1q 5
   rewrite pop 1
 exit
 
 port ge1
- mtu 9728
- service-instance TO_BR-CLI
-  encapsulation untagged
  service-instance TO_INET
   encapsulation dot1q 5
   rewrite pop 1
