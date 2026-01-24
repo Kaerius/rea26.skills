@@ -458,7 +458,7 @@ show vpls mac-table office-lan
 vpls-instance INET 10
  vpls-mtu 9710
  vpls-type raw
- member port ge2 service-instance TO_INET
+  member port ge2 service-instance TO_INET
  signaling ldp
   vpls-peer 2.2.2.2
   vpls-peer 3.3.3.3
@@ -473,6 +473,7 @@ vpls-instance INET 10
  vpls-mtu 9710
  vpls-type raw
  member port ge0 service-instance TO_INET
+ member port ge1 service-instance TO_INET
  signaling ldp
   vpls-peer 1.1.1.1
   exit-signaling
