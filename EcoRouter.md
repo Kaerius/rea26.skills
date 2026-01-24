@@ -13,7 +13,7 @@ ip route 0.0.0.0/0 192.168.122.1
 ip pim register-rp-reachability
 
 interface loopback.0
- ip mtu 1500
+ ip mtu 1550
  ip address 1.1.1.1/32
 exit
 
@@ -63,7 +63,7 @@ port ge2
 exit
 
 interface loopback.0
- ip mtu 1500
+ ip mtu 1550
  ip address 2.2.2.2/32
 exit
 ```
@@ -92,7 +92,7 @@ port ge2
 exit
 
 interface loopback.0
- ip mtu 1500
+ ip mtu 1550
  ip address 3.3.3.3/32
 exit
 ```
@@ -101,7 +101,7 @@ exit
 ### mpls-gw-core
 ```bash
 interface ge0_to_br
- ip mtu 1500
+ ip mtu 1600
  label-switching
  connect port ge0 service-instance TO_BR
  ip address 10.0.12.1/30
@@ -109,24 +109,18 @@ interface ge0_to_br
 exit
 
 interface ge1_to_cr
- ip mtu 1500
+ ip mtu 1600
  label-switching
  connect port ge1 service-instance TO_CR
  ip address 10.0.13.1/30
  ldp enable ipv4
-exit
-
-interface ge2_to_inet
- ip mtu 1500
- connect port ge2 service-instance TO_INET
- ip address 192.168.122.10/24
 exit
 ```
 
 ### mpls-gw-br
 ```bash
 interface ge2_to_core
- ip mtu 1500
+ ip mtu 1600
  label-switching
  connect port ge2 service-instance TO_CORE
  ip address 10.0.12.2/30
@@ -137,7 +131,7 @@ exit
 ### mpls-gw-cr
 ```bash
 interface ge2_to_core
- ip mtu 1500
+ ip mtu 1600
  label-switching
  connect port ge2 service-instance TO_CORE
  ip address 10.0.13.2/30
@@ -309,6 +303,25 @@ vpls-instance office-lan 100
   exit-signaling
 exit
 ```
+
+
+## Настройка VPLS для интернета
+
+### mpls-gw-core
+```bash
+vpls-instance INET 10
+ vpls-mtu 9710
+ vpls-type raw
+ member port ge2 service-instance TO_INET
+ signaling ldp
+  vpls-peer 2.2.2.2
+  vpls-peer 3.3.3.3
+  exit-signaling
+exit
+```
+
+
+
 
 
 ## Проверка MPLS + LDP
