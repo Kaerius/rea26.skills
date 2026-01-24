@@ -493,12 +493,14 @@ port ge0
  service-instance TO_INET
   encapsulation dot1q 5
   rewrite pop 1
+ exit
 exit
 
 port ge1
  service-instance TO_INET
   encapsulation dot1q 5
   rewrite pop 1
+ exit
 exit
 ```
 
