@@ -304,26 +304,6 @@ vpls-instance office-lan 100
 exit
 ```
 
-
-## Настройка VPLS для интернета
-
-### mpls-gw-core
-```bash
-vpls-instance INET 10
- vpls-mtu 9710
- vpls-type raw
- member port ge2 service-instance TO_INET
- signaling ldp
-  vpls-peer 2.2.2.2
-  vpls-peer 3.3.3.3
-  exit-signaling
-exit
-```
-
-
-
-
-
 ## Проверка MPLS + LDP
 
 show mpls ldp neighbor                 # Должны быть соседи по всем интерфейсам
@@ -390,6 +370,8 @@ router bgp 65001
  neighbor 3.3.3.3 default-originate
 exit
 ```
+
+
 
 
 ### mpls-gw-br
@@ -464,40 +446,75 @@ show vpls mac-table office-lan
 ```
 
 
-## Выход в «Интернет» (не работает!)
+## Выход в «Интернет»
 Настроить выход в инернет для клиентов.
+  1. Через MPLS пробросить сет 192.168.122.0/24 внутрь и завенуть её в влан, к примеру 5
+  2. В каждом офисе на одном из серверов поднять интерфейс который примет этот влан и получит адрес из сети 192.168.122.0/24
+  3. Настроить NAT между интерфейсами, использовать этот сервера как шлюз
 
-На BR повесить интерфейс с адресом 192.168.1.1/24 и включит его и все клиенты его не видят... 
-
-но он пигуется только с роутера
+### mpls-gw-core
 ```bash
-interface irb100
- ip address 192.168.1.1/24
- no shutdown
+vpls-instance INET 10
+ vpls-mtu 9710
+ vpls-type raw
+ member port ge2 service-instance TO_INET
+ signaling ldp
+  vpls-peer 2.2.2.2
+  vpls-peer 3.3.3.3
+  exit-signaling
 exit
 ```
 
-
-На CORE создаем пулл и включаем NAT
+### mpls-gw-br и mpls-gw-cr
+Присоеденится к MPLS и добавить сеть в BGP
 ```bash
-ip nat pool OFFICE 192.168.1.1-192.168.1.255
-ip nat source dynamic inside-to-outside pool OFFICE overload interface ge2_to_inet 
-
-interface ge2_to_inet
- ip nat outside
+vpls-instance INET 10
+ vpls-mtu 9710
+ vpls-type raw
+ member port ge0 service-instance TO_INET
+ signaling ldp
+  vpls-peer 1.1.1.1
+  exit-signaling
 exit
-
-interface ge1_to_cr
- ip nat inside
-exit
-
-interface ge0_to_br
- ip nat inside
+```
+```bash
+router bgp 65001
+ network 192.168.1.0/24
 exit
 ```
 
+### mpls-gw-br
+Настройка портов на mpls-gw-cr примерно также
 ```bash
+port ge0
+ mtu 9728
+ service-instance TO_HUB_BR
+  encapsulation untagged
+ service-instance TO_INET
+  encapsulation dot1q 5
+  rewrite pop 1
+exit
+
+port ge1
+ mtu 9728
+ service-instance TO_BR-CLI
+  encapsulation untagged
+ service-instance TO_INET
+  encapsulation dot1q 5
+  rewrite pop 1
+exit
 ```
+
+### server
+/etc/network/interfaces
+```bash
+auto enp1s0.5
+iface enp1s0.5 inet dhcp
+```
+
+Далее включаем Формвардин делаем NAT
+
+
 
 ## Настройка безопастности (Сделать)
 Испя пользователя пароль, активация доступа по SSh
