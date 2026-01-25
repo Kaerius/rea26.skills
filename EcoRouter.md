@@ -567,7 +567,7 @@ iface lo inet loopback
 auto enp1s0
 iface enp1s0 inet static
         address 192.168.1.14/24
-	       mtu 1440
+        mtu 1440
 
 auto enp1s0.5
 iface enp1s0.5 inet dhcp
