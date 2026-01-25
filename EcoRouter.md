@@ -619,18 +619,19 @@ snmp-server group reaskills v3 auth read view1
 ```
 
 Далее нужно настроить порт для управления, используем VLAN 100
+Не дает создать interface с mgmt в имени!!! Пишет используется зарезрвирование системное имя.
 
 ```bash
 port ge0
- service-instance MGMT
+ service-instance SNMP_SSH
   encapsulation dot1q 100
   rewrite pop 1
  exit
 exit
 
-interface cr_snmp
+interface snmp_ssh
  ip mtu 1500
- connect port ge0 service-instance MGMT
+ connect port ge0 service-instance SNMP_SSH
  ip address 192.168.100.3/24
 exit
 ```
