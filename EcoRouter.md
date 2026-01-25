@@ -593,7 +593,7 @@ banner motd ! REASKILLS 2026 !
 security-profile 10
   rule 10 permit udp any any eq 161
   rule 11 permit tcp any any eq 22
-!
+exit
 security 10
 
 username adminer 
@@ -634,6 +634,10 @@ interface snmp_ssh
  connect port ge0 service-instance SNMP_SSH
  ip address 192.168.100.3/24
 exit
+
+router ospf 1
+ network 192.168.100.0/24 area 0.0.0.0
+exit
 ```
 
 На Компе, нужно давить влан чтобы ходить к роутеру
@@ -644,6 +648,14 @@ exit
 auto eth0.100
 iface eth0.100 inet static
         address 192.168.100.13/24
+```
+
+Добавить маршрутизацию чтобы ходить через VLAN 100 можно было ходить на loopback адреса 
+
+```bash
+ip route add 1.1.1.1/32 via 192.168.100.3
+ip route add 2.2.2.2/32 via 192.168.100.3
+ip route add 3.3.3.3/32 via 192.168.100.3
 ```
 ## TFTP Backup
 Автоматизировать скидывание конфигов на TFTP сервер, развернуть сервер TFTP
