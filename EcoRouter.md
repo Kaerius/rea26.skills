@@ -8,6 +8,7 @@
 Внимательно MTU 1550 для loopback и 1600 для всех остальных интерфейсов иначе пакеты не дойдут.
 
 ### mpls-gw-core
+
 ```bash
 hostname mpls-gw-core.rea26.ru
 ip route 0.0.0.0/0 192.168.122.1
@@ -41,6 +42,7 @@ exit
 ```
 
 ### mpls-gw-br
+
 ```bash
 hostname mpls-gw-br.rea26.ru
 ip pim register-rp-reachability
@@ -70,6 +72,7 @@ exit
 ```
 
 ### mpls-gw-cr
+
 ```bash
 hostname mpls-gw-cr.rea26.ru
 ip pim register-rp-reachability
@@ -100,6 +103,7 @@ exit
 
 ## Настройка интерфейсов
 ### mpls-gw-core
+
 ```bash
 interface ge0_to_br
  ip mtu 1600
@@ -119,6 +123,7 @@ exit
 ```
 
 ### mpls-gw-br
+
 ```bash
 interface ge2_to_core
  ip mtu 1600
@@ -130,6 +135,7 @@ exit
 ```
 
 ### mpls-gw-cr
+
 ```bash
 interface ge2_to_core
  ip mtu 1600
@@ -141,17 +147,23 @@ exit
 ```
 
 ## Включаем OSPF
+
 ### mpls-gw-core
+
+Также отколючем расылку маршрута в ge2_to_inet
+
 ```bash
 router ospf 1
  ospf router-id 1.1.1.1
  network 1.1.1.1/32 area 0.0.0.0
  network 10.0.12.0/30 area 0.0.0.0
  network 10.0.13.0/30 area 0.0.0.0
+ passive-interface ge2_to_inet
 exit
 ```
 
 ### mpls-gw-br
+
 ```bash
 router ospf 1
  ospf router-id 2.2.2.2
@@ -161,6 +173,7 @@ exit
 ```
 
 ### mpls-gw-cr
+
 ```bash
 router ospf 1
  ospf router-id 3.3.3.3
@@ -172,9 +185,11 @@ exit
 
 Проверяем что получилось
 Проверяем со всех роутеров, в примере данные с core
+
 ```bash
 show ip ospf neighbor
 ```
+
 ```bash
 
 Total number of full neighbors: 2
@@ -214,6 +229,7 @@ PING 3.3.3.3 (3.3.3.3) 56(84) bytes of data.
 
 ## Включаем LDP
 ### mpls-gw-core
+
 ```bash
 router ldp
  targeted-peer ipv4 2.2.2.2
@@ -226,6 +242,7 @@ exit
 ```
 
 ### mpls-gw-br
+
 ```bash
 router ldp
  targeted-peer ipv4 3.3.3.3
@@ -235,6 +252,7 @@ exit
 ```
 
 ### mpls-gw-cr
+
 ```bash
 router ldp
  targeted-peer ipv4 2.2.2.2
@@ -245,6 +263,7 @@ exit
 
 ## Включаем LDP 
 на loopback на всех роутерах
+
 ```bash
 interface loopback.0
  ldp enable ipv4
@@ -252,6 +271,7 @@ exit
 ```
 
 ### mpls-gw-core
+
 ```bash
 interface ge0_to_br
  ldp enable ipv4
@@ -263,6 +283,7 @@ exit
 ```
 
 ### mpls-gw-br
+
 ```bash
 interface ge2_to_core
  ldp enable ipv4
@@ -270,6 +291,7 @@ exit
 ```
 
 ### mpls-gw-cr
+
 ```bash
 interface ge2_to_core
  ldp enable ipv4
@@ -280,6 +302,7 @@ exit
 Производится только на конечных BR b CR
 
 ### mpls-gw-br
+
 ```bash
 vpls-instance office-lan 100
  vpls-mtu 9710
@@ -293,6 +316,7 @@ exit
 ```
 
 ### mpls-gw-cr
+
 ```bash
 vpls-instance office-lan 100
  vpls-mtu 9710
@@ -314,7 +338,9 @@ show mpls forwarding-table             # Должны быть записи ти
 ```bash
 show mpls ldp neighbor
 ```
+
 Должны быть соседи по всем интерфейсам
+
 ```bash
 IP Address                 Intf Name    Holdtime   LDP-Identifier
 10.0.12.2                     ge0_to_br   15         2.2.2.2:0
@@ -324,7 +350,9 @@ IP Address                 Intf Name    Holdtime   LDP-Identifier
 ```bash
 show mpls ldp discovery 
 ```
+
 Должны быть записи для 1.1.1.1, 2.2.2.2, 3.3.3.3
+
 ```bash
 ge0_to_br    ge1_to_cr    ge2_to_inet  loopback.0   
 mpls-gw-core.rea26.ru#show mpls ldp discovery 
@@ -334,10 +362,13 @@ Id      Interface       LDP Identifier          LDP Enabled     Version Merge Ca
 8       ge1_to_cr       1.1.1.1:0              Enabled  IPv4    Merge capable
 9       ge2_to_inet     1.1.1.1:0              Disabled         N/A
 ```
+
 ```bash
 show mpls forwarding-table
 ```
+
 Должны быть записи типа "Pop" или "Swap"
+
 ```bash
 Codes: > - installed FTN, * - selected FTN, p - stale FTN,
        B - BGP FTN, K - CLI FTN,
@@ -352,6 +383,7 @@ L>      3.3.3.3/32          2         0           Yes   LSP_DEFAULT     3       
 ```bash
 traceroute 2.2.2.2 
 ```
+
 ```bash
 traceroute to 2.2.2.2 (2.2.2.2), 30 hops max, 60 byte packets
  1  2.2.2.2 (2.2.2.2)  27.954 ms  27.820 ms  27.735 ms
@@ -362,6 +394,7 @@ traceroute to 2.2.2.2 (2.2.2.2), 30 hops max, 60 byte packets
 Используем BGP AS 65001 на всех трёх
 
 ### mpls-gw-core
+
 ```bash
 router bgp 65001
  bgp router-id 1.1.1.1
@@ -372,10 +405,8 @@ router bgp 65001
 exit
 ```
 
-
-
-
 ### mpls-gw-br
+
 ```bash
 router bgp 65001
  bgp router-id 2.2.2.2
@@ -383,7 +414,9 @@ router bgp 65001
  neighbor 3.3.3.3 remote-as 65001
 exit
 ```
+
 ### mpls-gw-cr
+
 ```bash
 router bgp 65001
  bgp router-id 3.3.3.3
@@ -392,12 +425,13 @@ router bgp 65001
 exit
 ```
 
-
 ### Проверка
+
 ```bash
 show ip bgp summary
 
 ```
+
 ```bash
 BGP router identifier 1.1.1.1, local AS number 65001
 BGP table version is 1
@@ -417,7 +451,9 @@ Total number of Established sessions 2
 ```bash
 show vpls-instance detail office-lan
 ```
+
 Состояние peer должно быть Up (не Dn!)
+
 ```bash
 Virtual Private LAN Service Instance: office-lan, ID: 100
  SIG-Protocol: LDP
@@ -433,11 +469,12 @@ Virtual Private LAN Service Instance: office-lan, ID: 100
 mpls-gw-cr.rea26.ru>
 ```
 
-
 ```bash
 show vpls mac-table office-lan
 ```
+
 После подключения клиентов — должны появиться MAC
+
 ```bash
  VPLS Aging time is 60 sec
  
@@ -446,14 +483,15 @@ show vpls mac-table office-lan
   5254.006d.0954  ge0.TO_HUB                       SI                      28     
 ```
 
-
 ## Выход в «Интернет»
+
 Настроить выход в инернет для клиентов.
   1. Через MPLS пробросить сет 192.168.122.0/24 внутрь и завенуть её в влан, к примеру 5
   2. В каждом офисе на одном из серверов поднять интерфейс который примет этот влан и получит адрес из сети 192.168.122.0/24
   3. Настроить NAT между интерфейсами, использовать этот сервера как шлюз
 
 ### mpls-gw-core
+
 ```bash
 vpls-instance INET 10
  vpls-mtu 9710
@@ -467,7 +505,9 @@ exit
 ```
 
 ### mpls-gw-br и mpls-gw-cr
+
 Добавлем новый инстанс TO_INET и связываем его в VLAN 5
+
 ```bash
 port ge0
  service-instance TO_INET
@@ -485,6 +525,7 @@ exit
 ```
 
 Присоеденится к MPLS и добавить сеть в BGP
+
 ```bash
 vpls-instance INET 10
  vpls-mtu 9710
@@ -496,15 +537,19 @@ vpls-instance INET 10
   exit-signaling
 exit
 ```
+
 ```bash
 router bgp 65001
  network 192.168.1.0/24
 exit
 ```
 
-
 ### server
+
+```bash
 /etc/network/interfaces
+```
+
 ```bash
 auto enp1s0.5
 iface enp1s0.5 inet dhcp
@@ -581,6 +626,15 @@ ip link set eth0 mtu 1440
 ```
 
 
+## IP SLA на PE-роутерах (MPLS-GW-BR и MPLS-GW-CR)
+
+```bash
+ip sla-profile reaskills
+ icmp 192.168.122.103 num-packets 4
+ packet-frequency 30
+ rtt-threshold 1000
+!
+```
 
 ## Настройка безопастности
 Включаем банер.
@@ -613,7 +667,6 @@ service password-encryption
 
 ```bash
 snmp-server enable snmp 
-snmp-server community reaskills ro
 snmp-server view view1 .1 included
 snmp-server group reaskills v3 auth read view1
 ```
@@ -657,6 +710,7 @@ ip route add 1.1.1.1/32 via 192.168.100.3
 ip route add 2.2.2.2/32 via 192.168.100.3
 ip route add 3.3.3.3/32 via 192.168.100.3
 ```
+
 ## TFTP Backup
 Автоматизировать скидывание конфигов на TFTP сервер, развернуть сервер TFTP
 
@@ -713,4 +767,3 @@ sudo systemctl status tftpd-hpa
 ```bash
 copy startup-config tftp tftp://192.168.100.13/mpls-gw-cr.rea26.ru.cfg
 ```
-
