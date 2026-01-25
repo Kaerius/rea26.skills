@@ -6,6 +6,8 @@
 
 ```bash
 cat /etc/network/interfaces
+```
+```bash
 auto lo
 iface lo inet loopback
 
@@ -23,6 +25,9 @@ sudo hostnamectl set-hostname cr-dc.rea26.skills
 
 ```bash
 cat /etc/hosts
+```
+
+```bash
 127.0.0.1       localhost
 192.168.1.11    cr-dc.rea26.skills cr-dc
 ```
@@ -31,12 +36,18 @@ cat /etc/hosts
 
 ```bash
 cat /etc/resolv.conf
+```
+
+```bash
 namserver 10.113.38.139
 ```
 - Подключаем репозитории СТРОГО frozen и aldpro (их тоже frozen)
 
 ```bash
 cat /etc/apt/sources.list
+```
+
+```bash
 deb  https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-base/      1.7_x86-64 main contrib non-free
 deb  https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-extended/  1.7_x86-64 main contrib non-free
 deb  https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-main       1.7_x86-64 main non-free contrib
@@ -47,6 +58,9 @@ deb  https://dl.astralinux.ru/aldpro/frozen/01/3.0.0/                           
 
 ```bash
 cat /etc/astra/build_version
+```
+
+```bash
 sudo astra-modeswitch getname
 sudo astra-update -A -r
 ```
