@@ -582,20 +582,122 @@ ip link set eth0 mtu 1440
 
 
 
-## Настройка безопастности (Сделать)
-Испя пользователя пароль, активация доступа по SSh
+## Настройка безопастности
+Включаем банер.
+Разрешаем доступ по SSh и SNMP
+Создаем пользователя, отключаем встроеного, включаем шифрование паролей
+
 ```bash
 banner motd ! REASKILLS 2026 !
+
+security-profile 10
+  rule 10 permit udp any any eq 161
+  rule 11 permit tcp any any eq 22
+!
+security 10
+
+username adminer 
+ description sysadmin
+ password P@ssw0rd
+ role admin
+exit
+enable password P@ssw0rd
+no username admin
+service password-encryption
 ```
 
-## Настройка SNMPv3 (Сделать)
+## Настройка SNMPv3
 Получение данных по SNMPv3 с CR, но по задани нужно на всех
+
+Включем задаем паольь и права, если не сделать view то ничего не отдаст
+
 ```bash
+snmp-server enable snmp 
+snmp-server community reaskills ro
+snmp-server view view1 .1 included
+snmp-server group reaskills v3 auth read view1
 ```
 
-## TFTP Backup (Сделать)
-Автоматизировать скидывание конфигов на TFTP сервер
+Далее нужно настроить порт для управления, используем VLAN 100
+
 ```bash
+port ge0
+ service-instance MGMT
+  encapsulation dot1q 100
+  rewrite pop 1
+ exit
+exit
+
+interface cr_snmp
+ ip mtu 1500
+ connect port ge0 service-instance MGMT
+ ip address 192.168.100.3/24
+exit
 ```
 
+На Компе, нужно давить влан чтобы ходить к роутеру
+
+```bash
+/etc/network/interfaces
+
+auto eth0.100
+iface eth0.100 inet static
+        address 192.168.100.13/24
+```
+## TFTP Backup
+Автоматизировать скидывание конфигов на TFTP сервер, развернуть сервер TFTP
+
+Ставим это сервер, там есть другие но этот проще настривать
+
+```bash
+sudo apt install tftpd-hpa
+```
+
+Папка куда будут падать конфиги
+
+```bash
+sudo mkdir -p /opt/configs
+sudo chown nobody:nogroup /opt/configs
+sudo chmod 755 /opt/configs
+```
+
+настройка сервера TFTP
+
+```bash
+sudo nano /etc/default/tftpd-hpa
+TFTP_USERNAME="nobody"
+TFTP_DIRECTORY="/opt/configs"
+TFTP_ADDRESS=":69"
+TFTP_OPTIONS="--secure --create"
+```
+
+Не забыть открыть порт!!!
+
+```bash
+sudo ufw allow 69/udp
+sudo ufw reload
+```
+
+и проверить что он откыт
+
+```bash
+sudo ss -uln | grep :69
+```
+
+```bash
+UNCONN 0 0 *:69 *:*
+```
+
+Перезапустить и проверить что служба включена!
+
+```bash
+sudo systemctl restart tftpd-hpa
+sudo systemctl status tftpd-hpa
+```
+
+Можно скинуть конфиг с коммутатора используем ранее натсроеный VLAN 100
+
+```bash
+copy startup-config tftp tftp://192.168.100.13/mpls-gw-cr.rea26.ru.cfg
+```
 
