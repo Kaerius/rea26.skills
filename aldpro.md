@@ -17,10 +17,15 @@ iface etho0 inet static
 	gateway 192.168.1.14
 	mtu 1440
 ```
+
+```bash
+sudo systemctl restart networking.service
+```
 - Настраиваем хостнейм и hosts-файл
 
 ```bash
 sudo hostnamectl set-hostname cr-dc.rea26.skills
+exec bash
 ```
 
 ```bash
@@ -101,13 +106,24 @@ aldpro-gc --action install
 aldproctl status
 ```
 - В /etc/bind/ip-options-ext.conf отключаем dnssec и разрешаем рекурсивные запросы:
+- 
+```bash
+cat /etc/bind/ip-options-ext.conf
+```
 
 ```bash
 allow-recursion { any; };
 dnssec-validation no;
 ```
 - Перезапуск bind
-—————————————————————————-
-Далее настраиваем клиент:
+- 
+```bash
+cat /etc/bind/ip-options-ext.conf
+```
+
+```bash
+sudo systemctl restart bind9-pkcs11.service bind9-resolvconf.service
+```
+# Далее настраиваем клиент:
 - Аналогично выполняем базовую настройку (имя хоста, репозитории для 1.8.1 frozen, сеть - здесь допускается оставлять Network Manager и работать через него, в качестве dns указывается КД)
 - Устанавливаем пакет aldpro-client и вводим хост в домен
