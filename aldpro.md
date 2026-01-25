@@ -50,11 +50,11 @@ cat /etc/apt/sources.list
 ```
 
 ```bash
-deb  https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-base/      1.7_x86-64 main contrib non-free
-deb  https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-extended/  1.7_x86-64 main contrib non-free
-deb  https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-main       1.7_x86-64 main non-free contrib
-deb  https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-update     1.7_x86-64 main contrib non-free
-deb  https://dl.astralinux.ru/aldpro/frozen/01/3.0.0/                             1.7_x86-64 main base
+deb https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-base/     1.7_x86-64 main contrib non-free
+deb https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-extended/ 1.7_x86-64 main contrib non-free
+deb https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-main      1.7_x86-64 main non-free contrib
+deb https://dl.astralinux.ru/astra/frozen/1.7_x86-64/1.7.7/repository-update    1.7_x86-64 main contrib non-free
+deb https://dl.astralinux.ru/aldpro/frozen/01/3.0.0/                            1.7_x86-64 main base
 ```
 - Провеяе что система обновлена до 1.7.7
 
