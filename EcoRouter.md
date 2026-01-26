@@ -347,7 +347,6 @@ exit
 
 ```bash
 vpls-instance office-lan 100
- vpls-type raw
  member port ge0 service-instance TO_HUB_BR
  member port ge1 service-instance TO_BR-CLI
  signaling ldp
@@ -360,7 +359,6 @@ exit
 
 ```bash
 vpls-instance office-lan 100
- vpls-type raw
  member port ge0 service-instance TO_HUB-CR
  member port ge1 service-instance TO_CR-CLI
  signaling ldp
