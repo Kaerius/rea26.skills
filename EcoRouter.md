@@ -303,9 +303,9 @@ router ldp
 exit
 ```
 
-## Включаем LDP 
-на loopback на всех роутерах
+## Включаем LDP на интерфейсах 
 
+на всех loopback нужно включить
 ```bash
 interface loopback.0
  ldp enable ipv4
