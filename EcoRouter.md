@@ -38,6 +38,7 @@
 ### mpls-gw-core
 
 ```bash
+banner motd ! REASKILLS 2026 !
 hostname mpls-gw-core.rea26.ru
 ip route 0.0.0.0/0 192.168.122.1
 ip pim register-rp-reachability
@@ -48,21 +49,28 @@ interface loopback.0
 exit
 
 port ge0
- mtu 9728
  service-instance TO_BR
   encapsulation untagged
+ exit
+ service-instance SNMP_SSH
+  encapsulation dot1q 100
+  rewrite pop 1
+  exit
  exit
 exit
 
 port ge1
- mtu 9728
  service-instance TO_CR
   encapsulation untagged
+ exit
+ service-instance SNMP_SSH
+  encapsulation dot1q 100
+  rewrite pop 1
+  exit
  exit
 exit
 
 port ge2
- mtu 9728
  service-instance TO_INET
   encapsulation untagged
  exit
@@ -76,19 +84,26 @@ hostname mpls-gw-br.rea26.ru
 ip pim register-rp-reachability
 
 port ge0
- mtu 9728
  service-instance TO_HUB_BR
   encapsulation untagged
+ service-instance SNMP_SSH
+  encapsulation dot1q 100
+  rewrite pop 1
+  exit
+ exit
 exit
 
 port ge1
- mtu 9728
  service-instance TO_BR-CLI
   encapsulation untagged
+ service-instance SNMP_SSH
+  encapsulation dot1q 100
+  rewrite pop 1
+  exit
+ exit
 exit
 
 port ge2
- mtu 9728
  service-instance TO_CORE
   encapsulation untagged
 exit
@@ -106,19 +121,16 @@ hostname mpls-gw-cr.rea26.ru
 ip pim register-rp-reachability
 
 port ge0
- mtu 9728
- service-instance TO_HUB
+ service-instance TO_HUB-CR
   encapsulation untagged
 exit
 
 port ge1
- mtu 9728
  service-instance TO_CR-CLI
   encapsulation untagged
 exit
 
 port ge2
- mtu 9728
  service-instance TO_CORE
   encapsulation untagged
 exit
@@ -134,19 +146,17 @@ exit
 
 ```bash
 interface ge0_to_br
- ip mtu 1600
+ ip mtu 2000
  label-switching
  connect port ge0 service-instance TO_BR
  ip address 10.0.12.1/30
- ldp enable ipv4
 exit
 
 interface ge1_to_cr
- ip mtu 1600
+ ip mtu 2000
  label-switching
  connect port ge1 service-instance TO_CR
  ip address 10.0.13.1/30
- ldp enable ipv4
 exit
 ```
 
@@ -154,11 +164,10 @@ exit
 
 ```bash
 interface ge2_to_core
- ip mtu 1600
+ ip mtu 2000
  label-switching
  connect port ge2 service-instance TO_CORE
  ip address 10.0.12.2/30
- ldp enable ipv4
 exit
 ```
 
@@ -166,11 +175,10 @@ exit
 
 ```bash
 interface ge2_to_core
- ip mtu 1600
+ ip mtu 2000
  label-switching
  connect port ge2 service-instance TO_CORE
  ip address 10.0.13.2/30
- ldp enable ipv4
 exit
 ```
 
@@ -197,6 +205,7 @@ router ospf 1
  ospf router-id 2.2.2.2
  network 2.2.2.2/32 area 0.0.0.0
  network 10.0.12.0/30 area 0.0.0.0
+ network 192.168.100.0/24 area 0.0.0.0
 exit
 ```
 
@@ -207,6 +216,7 @@ router ospf 1
  ospf router-id 3.3.3.3
  network 3.3.3.3/32 area 0.0.0.0
  network 10.0.13.0/30 area 0.0.0.0
+ network 192.168.100.0/24 area 0.0.0.0
 exit
 ```
 
@@ -230,6 +240,7 @@ Neighbor ID     Pri   State            Dead Time   Address         Interface    
 ```bash
 show ip route ospf
 ```
+
 ```bash
 IP Route Table for VRF "default"
 O       2.2.2.2/32 [110/11] via 10.0.12.2, ge0_to_br, 01:15:26
@@ -239,9 +250,11 @@ Gateway of last resort is not set
 ```
 
 Проверяем пинги соседей с core, должны проходить
+
 ```bash
 ping 2.2.2.2
 ```
+
 ```bash
 PING 2.2.2.2 (2.2.2.2) 56(84) bytes of data.
 64 bytes from 2.2.2.2: icmp_seq=1 ttl=64 time=15.6 ms
@@ -250,6 +263,7 @@ PING 2.2.2.2 (2.2.2.2) 56(84) bytes of data.
 ```bash
 ping 3.3.3.3
 ```
+
 ```bash
 PING 3.3.3.3 (3.3.3.3) 56(84) bytes of data.
 64 bytes from 3.3.3.3: icmp_seq=1 ttl=64 time=18.9 ms
@@ -327,13 +341,12 @@ exit
 ```
 
 ## Настройка VPLS
-Производится только на конечных BR b CR
+Производится только на конечных BR и CR
 
 ### mpls-gw-br
 
 ```bash
 vpls-instance office-lan 100
- vpls-mtu 9710
  vpls-type raw
  member port ge0 service-instance TO_HUB_BR
  member port ge1 service-instance TO_BR-CLI
@@ -347,9 +360,8 @@ exit
 
 ```bash
 vpls-instance office-lan 100
- vpls-mtu 9710
  vpls-type raw
- member port ge0 service-instance TO_HUB
+ member port ge0 service-instance TO_HUB-CR
  member port ge1 service-instance TO_CR-CLI
  signaling ldp
   vpls-peer 2.2.2.2
@@ -358,10 +370,6 @@ exit
 ```
 
 ## Проверка MPLS + LDP
-
-show mpls ldp neighbor                 # Должны быть соседи по всем интерфейсам
-show mpls ldp bindings                 # Должны быть записи для 1.1.1.1, 2.2.2.2, 3.3.3.3
-show mpls forwarding-table             # Должны быть записи типа "Pop" или "Swap"
 
 ```bash
 show mpls ldp neighbor
@@ -491,7 +499,7 @@ Virtual Private LAN Service Instance: office-lan, ID: 100
  Description: none
  Operating mode: Raw
  Configured connections:
-  Port ge0 Service-instance TO_HUB
+  Port ge0 Service-instance TO_HUB-CR
   Port ge1 Service-instance TO_CR-CLI
  Mesh Peers:  2.2.2.2 (Up)
 mpls-gw-cr.rea26.ru>
@@ -508,7 +516,7 @@ show vpls mac-table office-lan
  
     L2 Address               AC / Peer               Type        VLAN     Age 
  ---------------- ------------------------------- ---------- ----------- -----
-  5254.006d.0954  ge0.TO_HUB                       SI                      28     
+  5254.006d.0954  ge0.TO_HUB-CR                   SI                      28     
 ```
 
 ## Выход в «Интернет»
