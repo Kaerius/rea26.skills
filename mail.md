@@ -10,6 +10,7 @@ apt install dovecot-imapd postfix dovecot-gssapi -y
 ```
 
 Отвечаем: 2. Интернет-сайт
+
 Указываем имя: office.rea26.skills
 
 Запускам конфиг сервера:
