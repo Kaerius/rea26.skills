@@ -49,21 +49,17 @@ cd /usr/share/easy-rsa/
 # 1. Почтовый сервер (без SAN - одно имя)
 ./easyrsa --pki-dir=/etc/ca build-server-full cr-srv.rea26.skills nopass
 
-# 2. ISP сайт (два домена в одном сертификате!)
-./easyrsa --pki-dir=/etc/ca \
-  --subject-alt-name="DNS:isp.rea26.skills,DNS:isp.rea26.ru" \
-  build-server-full isp nopass
+# 2. Grafana
+./easyrsa --pki-dir=/etc/ca build-server-full grafana.rea26.skills nopass
 
 # 3. Registry k8s
 ./easyrsa --pki-dir=/etc/ca build-server-full registry.rea26.skills nopass
 
-# 4. Корпоративный портал (два домена)
-./easyrsa --pki-dir=/etc/ca \
-  --subject-alt-name="DNS:portal.rea26.skills,DNS:portal.rea26.ru" \
-  build-server-full portal nopass
+# 4. ISP сайт (два домена в одном сертификате!)
+./easyrsa --pki-dir=/etc/ca --subject-alt-name="DNS:isp.rea26.skills,DNS:isp.rea26.ru" build-server-full isp nopass
 
-# 5. Grafana
-./easyrsa --pki-dir=/etc/ca build-server-full grafana.rea26.skills nopass
+# 6. Корпоративный портал (два домена)
+./easyrsa --pki-dir=/etc/ca --subject-alt-name="DNS:portal.rea26.skills,DNS:portal.rea26.ru" build-server-full portal nopass
 ```
 
 > ⚠️ **Важно при генерации**:  
