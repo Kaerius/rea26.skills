@@ -1,201 +1,286 @@
-# Настройка почтового скервера на сервере CR-SRV
+# Инструкция по настройке почтового сервера на CR-SRV
 
-Должен быть в домене?
+## Шаг 1: Установка необходимого ПО
 
-После развертывения центра сертификации?
-
-Ставим софт
 ```bash
-apt install dovecot-imapd postfix dovecot-gssapi -y
+# Обновление списка пакетов и установка почтового стека
+sudo apt update
+sudo apt install postfix dovecot-imapd dovecot-gssapi -y
 ```
 
-Отвечаем: 2. Интернет-сайт
+> **При установке `postfix` выберите:**
+> - Тип конфигурации: **«Интернет-сайт»**
+> - Имя системы: **`rea26.skills`**
 
-Указываем имя: office.rea26.skills
+## Использовать `dpkg-reconfigure postfix`
 
-Запускам конфиг сервера:
+Ответы при интерактивной настройке:
+
+| Вопрос | Ответ |
+|--------|-------|
+| **Тип конфигурации** | `2. Интернет-сайт` |
+| **Имя системы** | `rea26.skills` |
+| **Получатель почты для root** | (пусто) |
+| **Другие адреса для приёма почты** | `rea26.skills, mail.rea26.skills, localhost.rea26.skills, localhost` |
+| **Принудительно задействовать синхронные обновления** | `Нет` (по умолчанию) |
+| **Локальные сети** | `127.0.0.0/8, 192.168.1.0/24, 192.168.122.0/24` |
+| **Ограничение размера почтового ящика** | `0` (без ограничений) |
+| **Символ расширения локальных адресов** | `+` |
+| **Использовать протокол** | `3. Только IPv4` |
+
+---
+
+## Шаг 2: Настройка доверия корпоративному ЦС
 
 ```bash
-dpkg-reconfigure postfix
+# Копирование корневого сертификата в системное хранилище
+sudo cp /etc/ca/ca.crt /usr/local/share/ca-certificates/rea26-ca.crt
+sudo update-ca-certificates
 ```
 
-- Отвечаем: 2. Интернет-сайт
-- Указываем имя: office.rea26.skills
-- Получатель почты для root и postmaster: (пусто)
-- Другие адреса, для которых принимать почту: BR-CLI.rea62.skills, CR-CLI.rea62.skills, CR-SRV.rea62.skills, localhost, mail.office.rea26.skills, office.rea26.skills (указываем все адреса)
-- Принудительно задействовать синхроные обновления почтовой очереди?: Да
-- Локальные сети: 127.0.0.0/8, 192.168.1.0/24, 192.168.122.0/24 (все сети где есть клиенты почтовые)
-- Ограничения почтового язика в байтах: 0
-- Символ расширения локальных адресов: +
-- Использовать интернет протокол: 3 (ipv4)
+> Сертификаты для почтового сервера должны находиться в `/etc/ca/`:
+> - `/etc/ca/issued/cr-srv.rea26.skills.crt` — сертификат сервера
+> - `/etc/ca/private/cr-srv.rea26.skills.key` — закрытый ключ
+> - `/etc/ca/ca.crt` — корневой сертификат ЦС
 
-Установка сертификата (центр сертификации этот же сервер, нужно?)
+---
+
+## Шаг 3: Настройка Postfix (`/etc/postfix/main.cf`)
 
 ```bash
-cp /certs/cacert.pem /usr/local/share/ca-certificates/cacert.crt
-update-ca-certificates
+sudo nano /etc/postfix/main.cf
 ```
 
-Проверяем keytab и настиваем к нему доступ:
+Добавьте/измените следующие параметры:
 
-```bash
-klist -kte /etc/dovecot/mail.keytab
-```
+```ini
+# === Основные параметры ===
+myhostname = cr-srv.rea26.skills
+mydomain = rea26.skills
+myorigin = $mydomain
+inet_interfaces = all
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+mynetworks = 127.0.0.0/8, 192.168.1.0/24, 192.168.122.0/24
 
-```bash
-ipa-getkeytab -p <service>/<fqdn> -k /etc/dovekot/mail.keytab
-```
+# === TLS ===
+smtpd_tls_cert_file = /etc/ca/issued/cr-srv.rea26.skills.crt
+smtpd_tls_key_file = /etc/ca/private/cr-srv.rea26.skills.key
+smtpd_tls_CAfile = /etc/ca/ca.crt
+smtpd_use_tls = yes
+smtpd_tls_security_level = may
+smtpd_tls_auth_only = yes
 
-```bash
-chmod 640 /etc/dovecot/mail.keytab
-chmod dovecot:dovecot /etc/dovecot/mail.keytab
-```
-
-```bash
-ls -la /etc/dovecot/mail.keytab
-```
-
-```bash
-nano /etc/postfix/main.cf
-```
-
-```bash
-# TLS parameters
-smtpd_tls_cert_file=/cert/newcert.pem
-smtpd_tls_key_file=/cert/newcert.pem
-smtpd_use_tls=yes
-
-mail_spool_directory = /var/maildir/
-
+# === SASL через Dovecot ===
 smtpd_sasl_type = dovecot
 smtpd_sasl_path = private/auth
-smtpd_sasl_auth-enevle = yes
+smtpd_sasl_auth_enable = yes
+smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
 
-line_legth_limit = 3072
+# === Формат почтовых ящиков ===
+home_mailbox = Maildir/
+mail_spool_directory = /var/mail
+
+# === Ограничения ===
+message_size_limit = 52428800
+line_length_limit = 3072
 ```
 
+---
+
+## Шаг 4: Настройка порта submission (587) в `/etc/postfix/master.cf`
+
 ```bash
-mkdir -p /var/maildir/
-chgrp -R mail /var/maildir/
-chmor 2777 /var/maildir/
+sudo nano /etc/postfix/master.cf
 ```
 
-```bash
-nano /etc/dovecot/conf.d/10-auth.conf
+Раскомментируйте и проверьте секцию `submission`:
+
+```ini
+submission inet n       -       n       -       -       smtpd
+  -o syslog_name=postfix/submission
+  -o smtpd_tls_security_level=encrypt
+  -o smtpd_sasl_auth_enable=yes
+  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
+  -o smtpd_relay_restrictions=permit_sasl_authenticated,reject
 ```
 
+---
+
+## Шаг 5: Получение keytab для сервиса почты (через FreeIPA)
+
+> **Выполняется на сервере с ролью контроллера домена ALD Pro (обычно на том же CR-SRV)**
+
 ```bash
-# Host name to use in GSSAPI principal names. The default is to use the
-# name returned by gethostname(). Use "$ALL" (with quotes) to allow all keytab
-# entries.
-auth_gssapi_hostname ="$ALL"
+# Создание сервисной учётной записи и получение ключа
+sudo kinit admin  # Введите пароль администратора FreeIPA
 
-# Kerberos keytab to use for the GSSAPI mechanism. Will use the system
-# default (usually /etc/krb5.keytab) if not specified. You may need to change
-# the auth service to run as root to be able to read this file.
-auth_krb5_keytab = /etc/dovecot/mail.keytab
+# Добавление сервисной записи для почтового сервера
+sudo ipa service-add imap/cr-srv.rea26.skills@REA26.SKILLS
+sudo ipa service-add smtp/cr-srv.rea26.skills@REA26.SKILLS
 
-# Space separated list of wanted authentication mechanisms:
-#   plain login digest-md5 cram-md5 ntlm rpa apop anonymous gssapi otp skey
-#   gss-spnego
-# NOTE: See also disable_plaintext_auth setting.
-auth_mechanisms = gssapi
+# Получение keytab-файла
+sudo ipa-getkeytab -s localhost -p imap/cr-srv.rea26.skills@REA26.SKILLS -k /etc/dovecot/dovecot.keytab
+sudo ipa-getkeytab -s localhost -p smtp/cr-srv.rea26.skills@REA26.SKILLS -k /etc/postfix/postfix.keytab
+
+# Настройка прав доступа
+sudo chown dovecot:dovecot /etc/dovecot/dovecot.keytab
+sudo chmod 600 /etc/dovecot/dovecot.keytab
+sudo chown postfix:postfix /etc/postfix/postfix.keytab
+sudo chmod 600 /etc/postfix/postfix.keytab
 ```
 
-```bash
-nano /etc/dovecot/conf.d/10-ssl.conf
+> **Важно:** Имя реалма (`REA26.SKILLS`) должно совпадать с настройками FreeIPA. Проверить можно командой:
+> ```bash
+> sudo realm list
+> ```
+
+---
+
+## Шаг 6: Настройка Kerberos (`/etc/krb5.conf`)
+
+Убедитесь, что файл содержит корректные настройки домена:
+
+```ini
+[libdefaults]
+    default_realm = REA26.SKILLS
+    dns_lookup_realm = true
+    dns_lookup_kdc = true
+    ticket_lifetime = 24h
+    renew_lifetime = 7d
+    forwardable = true
+
+[realms]
+    REA26.SKILLS = {
+        kdc = cr-srv.rea26.skills
+        admin_server = cr-srv.rea26.skills
+    }
+
+[domain_realm]
+    .rea26.skills = REA26.SKILLS
+    rea26.skills = REA26.SKILLS
 ```
 
-```bash
-# SSL/TLS support: yes, no, required. <doc/wiki/SSL.txt>
-ssl = yes
+---
 
-# PEM encoded X.509 SSL/TLS certificate and private key. They're opened before
-# dropping root privileges, so keep the key file unreadable by anyone but
-# root. Included doc/mkcert.sh can be used to easily generate self-signed
-# certificate, just make sure to update the domains in dovecot-openssl.cnf
-ssl_cert = </cert/newcert.pem
-ssl_key = </cert/newcert.pem
+## Шаг 7: Настройка Dovecot — аутентификация через GSSAPI
+
+### 7.1. Включить GSSAPI в `/etc/dovecot/conf.d/10-auth.conf`
+
+```bash
+sudo nano /etc/dovecot/conf.d/10-auth.conf
 ```
 
-```bash
-nano /etc/dovecot/conf.d/10-master.conf
+```ini
+disable_plaintext_auth = yes
+auth_mechanisms = plain login gssapi
+
+# Отключить системную аутентификацию, использовать только GSSAPI
+!include auth-gssapi.conf.ext
 ```
 
-```bash
-service imap-login {
-  inet_listener imap {
-    port = 143
-  }
-  inet_listener imaps {
-    port = 993
-    ssl = yes
-  }
+### 7.2. Настроить GSSAPI (`/etc/dovecot/conf.d/auth-gssapi.conf.ext`)
 
-  # Number of connections to handle before starting a new process. Typically
-  # the only useful values are 0 (unlimited) or 1. 1 is more secure, but 0
-  # is faster. <doc/wiki/LoginProcess.txt>
-  #service_count = 1
+```ini
+auth_gssapi_hostname = cr-srv.rea26.skills
+gssapi_keytab = /etc/dovecot/dovecot.keytab
+gssapi_service_name = imap
+```
 
-  # Number of processes to always keep waiting for more connections.
-  #process_min_avail = 0
+### 7.3. Настроить TLS (`/etc/dovecot/conf.d/10-ssl.conf`)
 
-  # If you set service_count=0, you probably need to grow this.
-  #vsz_limit = $default_vsz_limit
-}
+```ini
+ssl = required
+ssl_cert = </etc/ca/issued/cr-srv.rea26.skills.crt
+ssl_key = </etc/ca/private/cr-srv.rea26.skills.key
+ssl_ca = </etc/ca/ca.crt
+```
 
+### 7.4. Настроить сокет аутентификации для Postfix (`/etc/dovecot/conf.d/10-master.conf`)
+
+Найдите секцию `service auth` и добавьте:
+
+```ini
 service auth {
-  # auth_socket_path points to this userdb socket by default. It's typically
-  # used by dovecot-lda, doveadm, possibly imap process, etc. Users that have
-  # full permissions to this socket are able to get a list of all usernames and
-  # get the results of everyone's userdb lookups.
-  #
-  # The default 0666 mode allows anyone to connect to the socket, but the
-  # userdb lookups will succeed only if the userdb returns an "uid" field that
-  # matches the caller process's UID. Also if caller's uid or gid matches the
-  # socket's uid or gid the lookup succeeds. Anything else causes a failure.
-  #
-  # To give the caller full permissions to lookup all users, set the mode to
-  # something else than 0666 and Dovecot lets the kernel enforce the
-  # permissions (e.g. 0777 allows everyone full permissions).
-  unix_listener auth-userdb {
-    # Unfortunately, getsockopt(SO_PEERCRED) doesn't work with kFreeBSD.
-    # So we can work around the problem by giving everyone access to the 
-    # userdb socket.
-    # Cf. http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=699121#10
-    #mode = 0777
-    #user = 
-    #group = 
-  }
-
-  # Postfix smtp-auth
   unix_listener /var/spool/postfix/private/auth {
     mode = 0660
     user = postfix
     group = postfix
   }
-
-  # Auth process is run as this user.
-  #user = $default_internal_user
 }
 ```
 
-```bash
-nano /etc/dovecot/conf.d/15-mailboxes.conf
+### 7.5. Указать формат почтовых ящиков (`/etc/dovecot/conf.d/10-mail.conf`)
+
+```ini
+mail_location = maildir:~/Maildir
 ```
 
+---
 
-```bash
-  # For \Sent mailboxes there are two widely used names. We'll mark both of
-  # them as \Sent. User typically deletes one of them if duplicates are created.
-  mailbox Sent {
-    special_use = \Sent
-    auto = subscride
-  }
+## Шаг 8: Настройка DNS — MX запись
+
+На сервере `ISP-SRV` (BIND) добавьте в зону `rea26.skills`:
+
+```dns
+rea26.skills.    IN  MX  10  mail.rea26.skills.
+mail             IN  A   <IP_адрес_CR-SRV>
 ```
 
+> Замените `<IP_адрес_CR-SRV>` на реальный IP адрес сервера (например, `192.168.1.13`)
 
-line_length_limit = 3072
+---
 
-И не забыть добавить mx запись
+## Шаг 9: Перезапуск служб
 
+```bash
+sudo systemctl restart postfix dovecot
+sudo systemctl enable postfix dovecot
+```
+
+---
+
+## Шаг 10: Проверка работоспособности
+
+### 10.1. Проверка получения почты
+
+```bash
+# Отправка тестового письма локальному пользователю
+echo "Test message from Postfix" | mail -s "Test IMAP" eva@rea26.skills
+```
+
+### 10.2. Проверка аутентификации Kerberos
+
+```bash
+# Получение билета для тестового пользователя
+kinit lori@REA26.SKILLS
+klist  # Просмотр полученного билета
+```
+
+### 10.3. Проверка логов
+
+```bash
+# Просмотр логов в реальном времени
+sudo tail -f /var/log/mail.log
+```
+
+### 10.4. Тестирование с почтового клиента
+
+На клиенте `CR-CLI`:
+1. Откройте Thunderbird / Outlook
+2. Укажите адрес: `lori@rea26.skills`
+3. Введите пароль учётной записи домена
+4. Клиент автоматически определит параметры через автонастройку
+5. Отправьте письмо на `eva@rea26.skills` (BR-CLI)
+6. Убедитесь, что письмо доставлено без запроса дополнительных параметров
+
+---
+
+## Схема аутентификации
+
+```
+Почтовый клиент (Thunderbird)
+         │
+         ├── IMAP (порт 993) ──► Dovecot ──► GSSAPI ──► FreeIPA (Kerberos)
+         │
+         └── SMTP (порт 587) ──► Postfix ──► SASL/Dovecot ──► GSSAPI ──► FreeIPA
+```
