@@ -1,5 +1,7 @@
 # Настройка почтового скервера на сервере CR-SRV
 
+!!!Должен быть в домене!!!
+
 Ставим софт
 ```bash
 apt install dovecot-imapd postfix dovecot-gssapi -y
@@ -30,6 +32,7 @@ dpkg-reconfigure postfix
 cp /certs/cacert.pem /usr/local/share/ca-certificates/cacert.crt
 update-ca-certificates
 ```
+
 
 
 
