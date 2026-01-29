@@ -1,9 +1,10 @@
 # Инструкция по настройке сетевой инфраструктуры на EcoRouter OS
 ## ReaSkills 2026 — Модуль C: Пуско-наладка сетевой инфраструктуры
-[MPLS-GW-CORE](./eco/MPLS-GW-CORE.cfg)) 
-[MPLS-GW-BR](./eco/MPLS-GW-BR.cfg)) 
-[MPLS-GW-CR](./eco/MPLS-GW-CR.cfg)) 
 > **Важно:** Все конфигурации ниже соответствуют финальным рабочим конфигам и проверены в топологии задания. Последовательность шагов оптимизирована для корректной работы MPLS/LDP/VPLS.
+
+[MPLS-GW-CORE](./eco/MPLS-GW-CORE.cfg) 
+[MPLS-GW-BR](./eco/MPLS-GW-BR.cfg) 
+[MPLS-GW-CR](./eco/MPLS-GW-CR.cfg) 
 
 ---
 
@@ -43,7 +44,7 @@ security 10
 ```
 
 > **Проверка:**  
-> `show users` — убедиться, что активна только учетная запись `adminer`  
+> `show users localdb` — убедиться, что активна только учетная запись `adminer`  
 > `show running-config | include password` — пароли должны отображаться в зашифрованном виде
 
 ---
@@ -144,7 +145,6 @@ exit
 ### Все устройства — Loopback
 ```bash
 interface loopback.0
- ip mtu 1550
  ip address <loopback-ip>/32  # 1.1.1.1 / 2.2.2.2 / 3.3.3.3
  ldp enable ipv4
 exit
@@ -153,7 +153,6 @@ exit
 ### MPLS-GW-CORE — Интерфейсы к другим роутерам
 ```bash
 interface ge0-to-br
- ip mtu 2000
  label-switching
  connect port ge0 service-instance TO_BR
  ip address 10.0.12.1/30
@@ -161,7 +160,6 @@ interface ge0-to-br
 exit
 
 interface ge1-to-cr
- ip mtu 2000
  label-switching
  connect port ge1 service-instance TO_CR
  ip address 10.0.13.1/30
@@ -169,7 +167,6 @@ interface ge1-to-cr
 exit
 
 interface ge2_to_inet
- ip mtu 1500
  ip address 192.168.122.10/24
 exit
 
@@ -180,7 +177,6 @@ ip route 0.0.0.0/0 192.168.122.1
 ### MPLS-GW-BR — Интерфейс к CORE
 ```bash
 interface ge2-to-core
- ip mtu 2000
  label-switching
  connect port ge2 service-instance TO_CORE
  ip address 10.0.12.2/30
@@ -205,7 +201,6 @@ exit
 ```
 
 > **Критично:**  
-> - `ip mtu 2000` обязателен на интерфейсах с `label-switching` для корректной передачи меток MPLS  
 > - Внешний интерфейс (`ge2_to_inet`) **не** должен иметь `label-switching`
 
 ---
@@ -317,7 +312,8 @@ exit
 
 #### MPLS-GW-CORE
 ```bash
-vpls-instance INET 10
+vpls-instance inet-lan 10
+ vpls-mtu 1500
  member port ge2 service-instance TO_INET
  signaling ldp
   vpls-peer 2.2.2.2
@@ -328,7 +324,8 @@ exit
 
 #### MPLS-GW-BR и MPLS-GW-CR
 ```bash
-vpls-instance INET 10
+vpls-instance inet-lan 10
+ vpls-mtu 1500
  member port ge0 service-instance TO_INET
  member port ge1 service-instance TO_INET
  signaling ldp
@@ -338,38 +335,10 @@ exit
 ```
 
 > **Проверка:**  
-> `show vpls-instance detail office-lan` — статус пира должен быть `Up`  
-> `show vpls mac-table office-lan` — после подключения клиентов должны отображаться MAC-адреса
-
----
-
-## 📡 Настройка BGP и маршрутизации по умолчанию
-
-### MPLS-GW-CORE
-```bash
-router bgp 65001
- bgp router-id 1.1.1.1
- neighbor 2.2.2.2 remote-as 65001
- neighbor 2.2.2.2 default-originate
- neighbor 3.3.3.3 remote-as 65001
- neighbor 3.3.3.3 default-originate
-exit
-```
-
-### MPLS-GW-BR и MPLS-GW-CR
-```bash
-router bgp 65001
- bgp router-id <loopback-ip>  # 2.2.2.2 или 3.3.3.3
- network 192.168.1.0/24
- neighbor 1.1.1.1 remote-as 65001
- neighbor 3.3.3.3 remote-as 65001  # Только для BR
- neighbor 2.2.2.2 remote-as 65001  # Только для CR
-exit
-```
-
-> **Проверка:**  
-> `show ip bgp summary` — все соседи должны быть в состоянии `Established`  
-> `show ip route bgp` — на PE-устройствах должен присутствовать маршрут `0.0.0.0/0`
+> `show vpls-instance detail office-lan` — статус пира должен быть `Up`, проверяем на BR/CR
+> `show vpls mac-table office-lan` — после подключения клиентов должны отображаться MAC-адреса, проверяем на BR/CR
+> `show vpls-instance detail inet-lan` — статус пира должен быть `Up`, проверяем на CORE/BR/CR
+> `show vpls mac-table inet-lan` — после подключения клиентов должны отображаться MAC-адреса, проверяем на CORE/BR/CR
 
 ---
 
@@ -389,6 +358,7 @@ exit
 snmp-server enable snmp
 snmp-server view view1 .1 included
 snmp-server group reaskills v3 auth read view1
+snmp-server user snmpuser group reaskills auth md5 snmppass
 ```
 
 > **Доступ по SNMP:**  
@@ -414,12 +384,11 @@ snmp-server group reaskills v3 auth read view1
 ## ⚠️ Критические замечания
 
 1. **MTU:**  
-   - Loopback: `ip mtu 1550`  
-   - Интерфейсы с метками: `ip mtu 2000`  
+   - VPLS в интернте: `vpls-mtu 1500`  
    Нарушение этих значений приведет к потере пакетов.
 
 2. **Безопасность управления:**  
-   - Доступ по SSH к офисным роутерам разрешен **только** из сети управления (VLAN 100) или клиентских сетей офиса  
+   - Доступ по SSH к офисным роутерам разрешен **только** из сети управления (VLAN 100) и дальнейшем доступ через шлюз.
 
 3. **Резервное копирование:**  
    Для выгрузки конфигурации на TFTP-сервер (`192.168.100.13`):
