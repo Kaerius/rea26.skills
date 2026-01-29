@@ -1,170 +1,160 @@
-## Актуализированная инструкция по работе с EasyRSA для ReaSkills 2026
+## 🔑 Универсальный сертификат (один на все сервисы)
+# 1. Установка и подготовка
 
-> 💡 **Важно**: Не забываем синхронизировать время с контролером домена!
-
-### 📋 Полный список сертификатов для генерации
-
-| Сервис | Доменные имена (SAN) | Где развернуть | Файл сертификата |
-|--------|----------------------|----------------|------------------|
-| **Почтовый сервер** | `cr-srv.rea26.skills` | CR-SRV | `/etc/ca/issued/mail.crt` |
-| **ISP веб-сайт** | `isp.rea26.skills`, `isp.rea26.ru` | ISP-SRV | `/etc/ca/issued/isp.crt` |
-| **Registry k8s** | `registry.rea26.skills` | BR-SRV* (ingress) | `/etc/ca/issued/registry.crt` |
-| **Корпоративный портал** | `portal.rea26.skills`, `portal.rea26.ru` | BR-SRV* (ingress) | `/etc/ca/issued/portal.crt` |
-| **Grafana** | `grafana.rea26.skills` | BR-SRV* (ingress) | `/etc/ca/issued/grafana.crt` |
-| **Корневой сертификат** | `REA2026-CA` | Все устройства | `/etc/ca/ca.crt` |
-
-> 💡 **Важно**: Для сервисов с двумя доменами (ISP, Portal) **обязательно** использовать один сертификат с несколькими SAN, иначе браузеры будут ругаться на несоответствие имени.
-
----
-
-### 🔧 Пошаговая инструкция (выполнять на CR-SRV)
-
-#### 1. Установка и подготовка
 ```bash
-apt install easy-rsa -y
-
-# Переход в рабочую директорию
-cd /usr/share/easy-rsa/
+apt install easy-rsa
 ```
 
-#### 2. Инициализация центра сертификации
-```bash
-# Создание PKI в требуемом каталоге
-./easyrsa --pki-dir=/etc/ca init-pki
+# 2. Инициализация ЦС
 
-# Генерация корневого сертификата БЕЗ пароля (для автоматизации)
+```bash
+cd /usr/share/easy-rsa/
+./easyrsa --pki-dir=/etc/ca init-pki
+```
+
+# 3. Корневой сертификат (CN=REA2026-CA)
+
+```bash
 ./easyrsa --pki-dir=/etc/ca build-ca nopass
 ```
-При запросе `Common Name` введите: **`REA2026-CA`**
+> Common Name: REA2026-CA
 
-#### 3. Генерация сертификатов для сервисов
+# 4. УНИВЕРСАЛЬНЫЙ сертификат для всех сервисов
 
 ```bash
-# Универасльный сертификат
-./easyrsa --pki-dir=/etc/ca build-server-full *.rea26.* nopass
+./easyrsa --pki-dir=/etc/ca --subject-alt-name="DNS:*.rea26.skills,DNS:*.rea26.ru" build-server-full rea26 nopass
 ```
-
-> ⚠️ **Важно при генерации**:  
-> - Для всех команд отвечайте `yes` при запросе подтверждения  
-> - Закрытые ключи будут в `/etc/ca/private/`  
-> - Сертификаты — в `/etc/ca/issued/`  
-> - Не удаляйте файлы `ca.crt` и `ca.key` — они нужны для выпуска новых сертификатов!
 
 ---
 
-### 🔐 Настройка доверия на всех устройствах
+## 🔐 Доверие на уровне системы (все устройства)
 
-#### На серверах (CR-SRV, BR-SRV*, ISP-SRV, CR-DC, BR-DC):
 ```bash
-# Копирование корневого сертификата
-cp /etc/ca/ca.crt /usr/local/share/ca-certificates/rea2026-ca.crt
-
-# Обновление системного хранилища
+cp /etc/ca/ca.crt /usr/local/share/ca-certificates/rea26-ca.crt
 update-ca-certificates
-
-# Проверка (должен появиться в списке)
-ls -la /etc/ssl/certs/ | grep rea26
 ```
 
-#### На клиентских ПК (CR-CLI, BR-CLI, OUT-CLI):
+---
+
+
+## 🔐 Настройка доверия через .bashrc
+
 ```bash
-# Системное доверие (как на серверах)
+# Системное доверие
 cp /etc/ca/ca.crt /usr/local/share/ca-certificates/rea26-ca.crt
 update-ca-certificates
 
-# Доверие для Firefox (для ВСЕХ пользователей)
-apt install libnss3-tools -y
+# Firefox (для всех пользователей)
+apt install -y libnss3-tools
 for profile in /home/*/.mozilla/firefox/*.default*; do
-  certutil -A -n "REA2026-CA" -t "TC,C,C" -i /etc/ca/ca.crt -d sql:$profile
+  certutil -A -n "REA2026-CA" -t "TC,C,C" -i /etc/ca/ca.crt -d sql:$profile 2>/dev/null || true
 done
 
-# Доверие для Thunderbird (аналогично)
+# Thunderbird (для всех пользователей)
 for profile in /home/*/.thunderbird/*.default*; do
-  certutil -A -n "REA2026-CA" -t "TC,C,C" -i /etc/ca/ca.crt -d sql:$profile
+  certutil -A -n "REA2026-CA" -t "TC,C,C" -i /etc/ca/ca.crt -d sql:$profile 2>/dev/null || true
 done
 ```
 
-> 💡 **Упрощение для учебного стенда**:  
-> Можно скопировать сертификат в профиль пользователя `kda` (или другого тестового пользователя), а не для всех:
-> ```bash
-> certutil -A -n "REA2026-CA" -t "TC,C,C" -i /etc/ca/ca.crt -d sql:/home/kda/.mozilla/firefox/*.default-release
-> ```
+## 🦊 Доверие для браузеров через /etc/skel
+
+```bash
+# 1. Создаём шаблон профиля с уже импортированным сертификатом
+mkdir -p /etc/skel/.mozilla/firefox/.default-release
+mkdir -p /etc/skel/.thunderbird/.default-release
+
+# 2. Инициализируем базы сертификатов
+certutil -N -d sql:/etc/skel/.mozilla/firefox/.default-release --empty-password
+certutil -N -d sql:/etc/skel/.thunderbird/.default-release --empty-password
+
+# 3. Импортируем корневой сертификат в шаблоны
+certutil -A -n "REA2026-CA" -t "TC,C,C" \
+  -i /etc/ca/ca.crt \
+  -d sql:/etc/skel/.mozilla/firefox/.default-release
+
+certutil -A -n "REA2026-CA" -t "TC,C,C" \
+  -i /etc/ca/ca.crt \
+  -d sql:/etc/skel/.thunderbird/.default-release
+
+# 4. Создаём profiles.ini для автоматического использования шаблона
+cat > /etc/skel/.mozilla/firefox/profiles.ini <<'EOF'
+[General]
+StartWithLastProfile=1
+
+[Profile0]
+Name=default-release
+IsRelative=1
+Path=.default-release
+Default=1
+EOF
+
+cat > /etc/skel/.thunderbird/profiles.ini <<'EOF'
+[General]
+StartWithLastProfile=1
+
+[Profile0]
+Name=default-release
+IsRelative=1
+Path=.default-release
+Default=1
+EOF
+
+# 5. Права доступа
+chmod -R 700 /etc/skel/.mozilla /etc/skel/.thunderbird
+```
 
 ---
 
-### 📁 Структура каталога `/etc/ca` после генерации
+## 👤 Для существующих пользователей (kda и др.)
+
+```bash
+# Импорт сертификата в профили всех текущих пользователей
+for user_home in /home/*; do
+  user=$(basename "$user_home")
+  
+  # Firefox
+  profile=$(find "$user_home/.mozilla/firefox" -name "*.default*" -type d 2>/dev/null | head -1)
+  [ -n "$profile" ] && certutil -A -n "REA2026-CA" -t "TC,C,C" \
+    -i /etc/ca/ca.crt -d sql:"$profile" 2>/dev/null
+  
+  # Thunderbird
+  profile=$(find "$user_home/.thunderbird" -name "*.default*" -type d 2>/dev/null | head -1)
+  [ -n "$profile" ] && certutil -A -n "REA2026-CA" -t "TC,C,C" \
+    -i /etc/ca/ca.crt -d sql:"$profile" 2>/dev/null
+done
+```
+
+---
+
+## 📁 Итоговая структура
+
 ```
 /etc/ca/
-├── ca.crt          # ← КОРНЕВОЙ СЕРТИФИКАТ (раздавать всем!)
-├── ca.key          # ← Закрытый ключ CA (хранить в секрете!)
-├── issued/
-│   ├── cr-srv.rea26.skills.crt
-│   ├── isp.crt
-│   ├── registry.rea26.skills.crt
-│   ├── portal.crt
-│   └── grafana.rea26.skills.crt
-├── private/
-│   ├── ca.key
-│   ├── cr-srv.rea26.skills.key
-│   ├── isp.key
-│   └── ... (остальные закрытые ключи)
-└── ...
+├── ca.crt          # ← Корневой сертификат (раздавать всем!)
+├── ca.key          # ← Закрытый ключ ЦС (не передавать!)
+├── issued/rea26.crt    # ← Универсальный сертификат для всех сервисов
+└── private/rea26.key   # ← Закрытый ключ универсального сертификата
+
+/etc/skel/
+├── .mozilla/firefox/.default-release/
+│   ├── cert9.db        # ← База с импортированным REA2026-CA
+│   └── profiles.ini
+└── .thunderbird/.default-release/
+    ├── cert9.db        # ← База с импортированным REA2026-CA
+    └── profiles.ini
 ```
 
 ---
 
-### ⚙️ Как использовать сертификаты в сервисах
+## ✅ Проверка
 
-#### Для веб-серверов (nginx/apache на ISP-SRV):
-```nginx
-ssl_certificate /etc/ca/issued/isp.crt;
-ssl_certificate_key /etc/ca/private/isp.key;
-ssl_client_certificate /etc/ca/ca.crt;  # для клиентской аутентификации (если нужна)
-```
-
-#### Для почтового сервера (Postfix):
 ```bash
-smtpd_tls_cert_file = /etc/ca/issued/cr-srv.rea26.skills.crt
-smtpd_tls_key_file = /etc/ca/private/cr-srv.rea26.skills.key
-smtpd_tls_CAfile = /etc/ca/ca.crt
+# 1. Проверка SAN в сертификате
+openssl x509 -in /etc/ca/issued/rea26.crt -text -noout | grep -A2 "X509v3 Subject Alternative Name"
+
+# 2. Проверка доверия в системе
+curl -I https://cr-srv.rea26.skills  # без --insecure!
+
+# 3. Проверка доверия в профиле
+certutil -L -d sql:/etc/skel/.mozilla/firefox/.default-release | grep REA2026-CA
 ```
-
-#### Для ingress в k8s (пример манифеста):
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: portal
-spec:
-  tls:
-  - hosts:
-    - portal.rea26.skills
-    - portal.rea26.ru
-    secretName: portal-tls
-  rules:
-  - host: portal.rea26.skills
-    http: ...
-```
-Создать secret:
-```bash
-kubectl create secret tls portal-tls \
-  --cert=/etc/ca/issued/portal.crt \
-  --key=/etc/ca/private/portal.key \
-  -n default
-```
-
----
-
-### ✅ Проверка работоспособности
-```bash
-# Проверка цепочки доверия
-openssl verify -CAfile /etc/ca/ca.crt /etc/ca/issued/isp.crt
-
-# Проверка SAN в сертификате
-openssl x509 -in /etc/ca/issued/isp.crt -text -noout | grep -A1 "Subject Alternative Name"
-
-# Проверка через curl (должен работать БЕЗ --insecure)
-curl -v https://isp.rea26.skills
-```
-
-> 💡 **Совет для стенда**: Если времени мало — сгенерируйте сначала сертификаты для **ISP-SRV** и **портала**, так как они критичны для проверки внешнего/внутреннего доступа. Остальные можно доделать позже.
