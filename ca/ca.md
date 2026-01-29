@@ -21,12 +21,6 @@
 
 #### 1. Установка и подготовка
 ```bash
-# Настройка прокси (обязательно для загрузки пакетов)
-export http_proxy="http://proxy.tech.skills:3128"
-export https_proxy="http://proxy.tech.skills:3128"
-
-# Установка пакета
-apt update
 apt install easy-rsa -y
 
 # Переход в рабочую директорию
@@ -46,20 +40,8 @@ cd /usr/share/easy-rsa/
 #### 3. Генерация сертификатов для сервисов
 
 ```bash
-# 1. Почтовый сервер (без SAN - одно имя)
-./easyrsa --pki-dir=/etc/ca build-server-full cr-srv.rea26.skills nopass
-
-# 2. Grafana
-./easyrsa --pki-dir=/etc/ca build-server-full grafana.rea26.skills nopass
-
-# 3. Registry k8s
-./easyrsa --pki-dir=/etc/ca build-server-full registry.rea26.skills nopass
-
-# 4. ISP сайт (два домена в одном сертификате!)
-./easyrsa --pki-dir=/etc/ca --subject-alt-name="DNS:isp.rea26.skills,DNS:isp.rea26.ru" build-server-full isp nopass
-
-# 6. Корпоративный портал (два домена)
-./easyrsa --pki-dir=/etc/ca --subject-alt-name="DNS:portal.rea26.skills,DNS:portal.rea26.ru" build-server-full portal nopass
+# Универасльный сертификат
+./easyrsa --pki-dir=/etc/ca build-server-full *.rea26.* nopass
 ```
 
 > ⚠️ **Важно при генерации**:  
