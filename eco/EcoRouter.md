@@ -2,9 +2,9 @@
 ## ReaSkills 2026 — Модуль C: Пуско-наладка сетевой инфраструктуры
 > **Важно:** Все конфигурации ниже соответствуют финальным рабочим конфигам и проверены в топологии задания. Последовательность шагов оптимизирована для корректной работы MPLS/LDP/VPLS.
 
-[MPLS-GW-CORE](./eco/MPLS-GW-CORE.cfg) 
-[MPLS-GW-BR](./eco/MPLS-GW-BR.cfg) 
-[MPLS-GW-CR](./eco/MPLS-GW-CR.cfg) 
+Копи паст конфиги: [MPLS-GW-CORE](./eco/MPLS-GW-CORE.cfg) [MPLS-GW-BR](./eco/MPLS-GW-BR.cfg) [MPLS-GW-CR](./eco/MPLS-GW-CR.cfg) 
+
+Конфиги с устройств: [MPLS-GW-CORE](./eco/mpls-gw-core.cfg) [MPLS-GW-BR](./eco/mpls-gw-br.cfg) [MPLS-GW-CR](./eco/mpls-gw-cr.cfg) 
 
 ---
 
