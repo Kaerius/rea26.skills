@@ -11,6 +11,8 @@
 
 Конфиги с устройств: [MPLS-GW-CORE](./eco/mpls-gw-core.cfg) [MPLS-GW-BR](./eco/mpls-gw-br.cfg) [MPLS-GW-CR](./eco/mpls-gw-cr.cfg) 
 
+[EcoRouter.pdf](https://disk.yandex.ru/d/I1aPLIi6j46p8A) 
+
 ---
 
 ## 📋 Топология и адресация
