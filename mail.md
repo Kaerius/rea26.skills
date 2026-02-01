@@ -132,7 +132,7 @@ mail_location = maildir:~/Maildir
 
 ## Шаг 8: Настройка DNS — MX запись
 
-На сервере `CR-DC` (BIND) добавьте в зону `rea26.skills`:
+На сервере `CR-DC` (BIND) добавьте в зону `rea26.skills` запись:
 
 ```dns
 rea26.skills.    IN  MX  10  mail.rea26.skills.
