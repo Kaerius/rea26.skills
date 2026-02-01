@@ -5,7 +5,7 @@
 ```bash
 # Обновление списка пакетов и установка почтового стека
 sudo apt update
-sudo apt install postfix dovecot-imapd dovecot-gssapi -y
+sudo apt install postfix dovecot-imapd
 ```
 
 > **При установке `postfix` выберите:**
