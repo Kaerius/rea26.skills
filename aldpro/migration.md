@@ -20,6 +20,9 @@
 
 Указать параметры 
 
+![alt text](migration-conect.jpg) 
+
+![alt text](migration-start.jpg) 
 
 пользователи (users);
 группы пользователей (groups);
