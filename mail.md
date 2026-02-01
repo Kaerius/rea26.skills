@@ -39,8 +39,8 @@ sudo update-ca-certificates
 ```
 
 > Сертификаты для почтового сервера должны находиться в `/etc/ca/`:
-> - `/etc/ca/issued/cr-srv.rea26.skills.crt` — сертификат сервера
-> - `/etc/ca/private/cr-srv.rea26.skills.key` — закрытый ключ
+> - `/etc/ca/issued/rea26.crt` — сертификат сервера
+> - `/etc/ca/private/rea26.key` — закрытый ключ
 > - `/etc/ca/ca.crt` — корневой сертификат ЦС
 
 ---
@@ -63,8 +63,8 @@ mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
 mynetworks = 127.0.0.0/8, 192.168.1.0/24, 192.168.122.0/24
 
 # === TLS ===
-smtpd_tls_cert_file = /etc/ca/issued/cr-srv.rea26.skills.crt
-smtpd_tls_key_file = /etc/ca/private/cr-srv.rea26.skills.key
+smtpd_tls_cert_file = /etc/ca/issued/rea26.crt
+smtpd_tls_key_file = /etc/ca/private/rea26.key
 smtpd_tls_CAfile = /etc/ca/ca.crt
 smtpd_use_tls = yes
 smtpd_tls_security_level = may
@@ -103,8 +103,8 @@ auth_mechanisms = plain login
 
 ```ini
 ssl = required
-ssl_cert = </etc/ca/issued/cr-srv.rea26.skills.crt
-ssl_key = </etc/ca/private/cr-srv.rea26.skills.key
+ssl_cert = </etc/ca/issued/rea26.crt
+ssl_key = </etc/ca/private/rea26.key
 ssl_ca = </etc/ca/ca.crt
 ```
 
