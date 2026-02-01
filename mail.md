@@ -1,4 +1,7 @@
 # Инструкция по настройке почтового сервера на CR-SRV
+## Шаг 0: Установка необходимого ПО
+
+Делаем клиентом Домена! Чтобы доменые УЗ былыи локальными и не настривать ldap соедениение.
 
 ## Шаг 1: Установка необходимого ПО
 
@@ -36,6 +39,11 @@ sudo apt install postfix dovecot-imapd
 # Копирование корневого сертификата в системное хранилище
 sudo cp /etc/ca/ca.crt /usr/local/share/ca-certificates/rea26-ca.crt
 sudo update-ca-certificates
+```
+
+Выдать права на сетрификаты (Добавить правильные права или скопировать серт)
+```bash
+sudo chmod 777 -R /etc/ca
 ```
 
 > Сертификаты для почтового сервера должны находиться в `/etc/ca/`:
@@ -80,15 +88,14 @@ home_mailbox = Maildir/
 mail_spool_directory = /var/mail
 
 # === Ограничения ===
-message_size_limit = 52428800
 line_length_limit = 3072
 ```
 
 ---
 
-## Шаг 7: Настройка Dovecot — аутентификация через GSSAPI
+## Шаг 4: Настройка Dovecot — аутентификация через GSSAPI
 
-### 7.1. Включить GSSAPI в `/etc/dovecot/conf.d/10-auth.conf`
+### 4.1. Включить GSSAPI в `/etc/dovecot/conf.d/10-auth.conf`
 
 ```bash
 sudo nano /etc/dovecot/conf.d/10-auth.conf
@@ -99,7 +106,7 @@ disable_plaintext_auth = no
 auth_mechanisms = plain login
 ```
 
-### 7.3. Настроить TLS (`/etc/dovecot/conf.d/10-ssl.conf`)
+### 4.2. Настроить TLS (`/etc/dovecot/conf.d/10-ssl.conf`)
 
 ```ini
 ssl = required
@@ -108,21 +115,23 @@ ssl_key = </etc/ca/private/rea26.key
 ssl_ca = </etc/ca/ca.crt
 ```
 
-### 7.4. Настроить сокет аутентификации для Postfix (`/etc/dovecot/conf.d/10-master.conf`)
+### 4.3. Настроить сокет аутентификации для Postfix (`/etc/dovecot/conf.d/10-master.conf`)
 
 Найдите секцию `service auth` и добавьте:
 
 ```ini
-service auth {
-  unix_listener /var/spool/postfix/private/auth {
-    mode = 0660
-    user = postfix
-    group = postfix
+service imap-login {
+  inet_listener imap {
+    port = 143
+  }
+  inet_listener imaps {
+    port = 993
+    ssl = yes
   }
 }
 ```
 
-### 7.5. Указать формат почтовых ящиков (`/etc/dovecot/conf.d/10-mail.conf`)
+### 4.4. Указать формат почтовых ящиков (`/etc/dovecot/conf.d/10-mail.conf`)
 
 ```ini
 mail_location = maildir:~/Maildir
@@ -130,7 +139,7 @@ mail_location = maildir:~/Maildir
 
 ---
 
-## Шаг 8: Настройка DNS — MX запись
+## Шаг 5: Настройка DNS — MX запись
 
 На сервере `CR-DC` (BIND) добавьте в зону `rea26.skills` запись:
 
@@ -139,11 +148,11 @@ rea26.skills.    IN  MX  10  mail.rea26.skills.
 mail             IN  A   <IP_адрес_CR-SRV>
 ```
 
-> Замените `<IP_адрес_CR-SRV>` на реальный IP адрес сервера (например, `192.168.1.13`)
+> Замените `<IP_адрес_CR-SRV>` на реальный IP адрес сервера (например, `192.168.1.1`)
 
 ---
 
-## Шаг 9: Перезапуск служб
+## Шаг 6: Перезапуск служб
 
 ```bash
 sudo systemctl restart postfix dovecot
@@ -152,23 +161,23 @@ sudo systemctl enable postfix dovecot
 
 ---
 
-## Шаг 10: Проверка работоспособности
+## Шаг 7: Проверка работоспособности
 
-### 10.1. Проверка получения почты
+### 7.1. Проверка получения почты
 
 ```bash
 # Отправка тестового письма локальному пользователю
 echo "Test message from Postfix" | mail -s "Test IMAP" eva@rea26.skills
 ```
 
-### 10.3. Проверка логов
+### 7.2. Проверка логов
 
 ```bash
 # Просмотр логов в реальном времени
 sudo tail -f /var/log/mail.log
 ```
 
-### 10.4. Тестирование с почтового клиента
+### 7.3. Тестирование с почтового клиента
 
 На клиенте `CR-CLI`:
 1. Откройте Thunderbird / Outlook
