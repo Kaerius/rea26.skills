@@ -15,32 +15,32 @@
 
 ## Шаг 2: Отключение безопасности LDAP в групповых политиках
 1. В поисковеке набрать `Local Policies`, открыть `Local Policies`
-2. Перейдите в `Domain Controllers` → `Default Domain Controller Policy` → правой кнопкой → `Edit`
-3. В редакторе групповых политик перейдите в:
+2. В редакторе групповых политик перейдите в:
    -  `Local Policies` → `Security Options`
-4. Найдите и настройте следующие параметры:
+3. Найдите и настройте следующие параметры:
    - **"Domain controller: LDAP server channel binding token requirements"** → `Never`
    - **"Domain controller: LDAP server signing requirements"** → `None`
    - **"Domain controller: LDAP server signing requirements Enforcement"** → `Disabled`
-5. Примените изменения и обновите групповую политику командой `gpupdate /force`
+4. Примените изменения и обновите групповую политику командой `gpupdate /force`
 
 ---
 
-## Шаг 3: Настройка DNS-форвардера в ALD
-1. Подключитесь к серверу ALD (`cr-db.tech.skills`)
-2. Добавьте новый форвардер:
-   - IP-адрес: `IP-адрес сервера 192.168.1.101`
-   - Домен: `tech.skills`
-3. Сохраните настройки
+## Шаг 3: Настройка DNS-форвардинга в ALD
+1. Подключитесь к веб-интерфейсу ALD (`cr-db.tech.skills`)
+2. Перейдите в раздел DNS-настроек
+3. Добавьте новый форвардер:
+   - **Домен:** `tech.skills`
+   - **IP-адрес:** `192.168.1.101`
+4. Сохраните настройки
 
 ---
 
 ## Шаг 4: Проверка видимости AD через ldapsearch
 Выполните на сервере ALD:
 ```bash
-ldapsearch -x -H ldap://win-ad.tech.skills -b "DC=tech,DC=skills" "(objectclass=*)" dn
+ldapsearch -x -H ldap://win-ad.tech.skills -b "DC=tech,DC=skills" -s base
 ```
-Если команда возвращает список объектов AD, значит соединение установлено корректно.
+Если в ответе видны атрибуты домена (например, objectClass: top, objectClass: domain), значит соединение установлено корректно.
 
 ---
 
@@ -51,7 +51,7 @@ ldapsearch -x -H ldap://win-ad.tech.skills -b "DC=tech,DC=skills" "(objectclass=
 - **Имя домена**: `tech.skills`
 - **Контроллер домена**: `ldap://win-ad.tech.skills:389`
 - **Базовое уникальное имя (base DN)**: `DC=tech,DC=skills`
-- **Игнорировать ошибки SSL**: Включено
+- **Игнорировать ошибки SSL**: ✅ Включено
 
 ![alt text](migration-conect.jpg) 
 
@@ -64,9 +64,9 @@ ldapsearch -x -H ldap://win-ad.tech.skills -b "DC=tech,DC=skills" "(objectclass=
 - **Подразделение Active Directory**: `Migration`
 - **Подразделение ALD Pro**: `rea26.skills`
 - **Объекты миграции**: 
-  - Группы Пользователей: Включено
-  - Организационное Подразделение: Выключено
-  - Пользователи: Включено
+  - Группы Пользователей: ✅ Включено
+  - Организационное Подразделение: ❌ Выключено
+  - Пользователи: ✅ Включено
 - **Пароль пользователя**: `P@ssw0rd`
 
 ![alt text](migration-start.jpg) 
