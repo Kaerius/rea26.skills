@@ -74,7 +74,7 @@ smtpd_tls_auth_only = yes
 smtpd_sasl_type = dovecot
 smtpd_sasl_path = private/auth
 smtpd_sasl_auth_enable = yes
-smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
+smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination # Проверить?
 
 # === Формат почтовых ящиков ===
 home_mailbox = Maildir/
@@ -83,81 +83,6 @@ mail_spool_directory = /var/mail
 # === Ограничения ===
 message_size_limit = 52428800
 line_length_limit = 3072
-```
-
----
-
-## Шаг 4: Настройка порта submission (587) в `/etc/postfix/master.cf`
-
-```bash
-sudo nano /etc/postfix/master.cf
-```
-
-Раскомментируйте и проверьте секцию `submission`:
-
-```ini
-submission inet n       -       n       -       -       smtpd
-  -o syslog_name=postfix/submission
-  -o smtpd_tls_security_level=encrypt
-  -o smtpd_sasl_auth_enable=yes
-  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
-  -o smtpd_relay_restrictions=permit_sasl_authenticated,reject
-```
-
----
-
-## Шаг 5: Получение keytab для сервиса почты (через FreeIPA)
-
-> **Выполняется на сервере с ролью контроллера домена ALD Pro (CR-DC)**
-
-```bash
-# Создание сервисной учётной записи и получение ключа
-sudo kinit admin  # Введите пароль администратора FreeIPA
-
-# Добавление сервисной записи для почтового сервера
-sudo ipa service-add imap/cr-srv.rea26.skills@REA26.SKILLS
-sudo ipa service-add smtp/cr-srv.rea26.skills@REA26.SKILLS
-
-# Получение keytab-файла
-sudo ipa-getkeytab -s localhost -p imap/cr-srv.rea26.skills@REA26.SKILLS -k /etc/dovecot/dovecot.keytab
-sudo ipa-getkeytab -s localhost -p smtp/cr-srv.rea26.skills@REA26.SKILLS -k /etc/postfix/postfix.keytab
-
-# Настройка прав доступа
-sudo chown dovecot:dovecot /etc/dovecot/dovecot.keytab
-sudo chmod 600 /etc/dovecot/dovecot.keytab
-sudo chown postfix:postfix /etc/postfix/postfix.keytab
-sudo chmod 600 /etc/postfix/postfix.keytab
-```
-
-> **Важно:** Имя реалма (`REA26.SKILLS`) должно совпадать с настройками FreeIPA. Проверить можно командой:
-> ```bash
-> sudo realm list
-> ```
-
----
-
-## Шаг 6: Настройка Kerberos (`/etc/krb5.conf`)
-
-Убедитесь, что файл содержит корректные настройки домена:
-
-```ini
-[libdefaults]
-    default_realm = REA26.SKILLS
-    dns_lookup_realm = true
-    dns_lookup_kdc = true
-    ticket_lifetime = 24h
-    renew_lifetime = 7d
-    forwardable = true
-
-[realms]
-    REA26.SKILLS = {
-        kdc = cr-srv.rea26.skills
-        admin_server = cr-srv.rea26.skills
-    }
-
-[domain_realm]
-    .rea26.skills = REA26.SKILLS
-    rea26.skills = REA26.SKILLS
 ```
 
 ---
@@ -171,19 +96,8 @@ sudo nano /etc/dovecot/conf.d/10-auth.conf
 ```
 
 ```ini
-disable_plaintext_auth = yes
-auth_mechanisms = plain login gssapi
-
-# Отключить системную аутентификацию, использовать только GSSAPI
-!include auth-gssapi.conf.ext
-```
-
-### 7.2. Настроить GSSAPI (`/etc/dovecot/conf.d/auth-gssapi.conf.ext`)
-
-```ini
-auth_gssapi_hostname = cr-srv.rea26.skills
-gssapi_keytab = /etc/dovecot/dovecot.keytab
-gssapi_service_name = imap
+disable_plaintext_auth = no
+auth_mechanisms = plain login
 ```
 
 ### 7.3. Настроить TLS (`/etc/dovecot/conf.d/10-ssl.conf`)
