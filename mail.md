@@ -74,7 +74,6 @@ smtpd_tls_auth_only = yes
 smtpd_sasl_type = dovecot
 smtpd_sasl_path = private/auth
 smtpd_sasl_auth_enable = yes
-smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination # Проверить?
 
 # === Формат почтовых ящиков ===
 home_mailbox = Maildir/
