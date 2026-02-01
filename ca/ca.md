@@ -30,8 +30,8 @@ cd /usr/share/easy-rsa/
 ## 🔐 Доверие на уровне системы (все устройства)
 
 ```bash
-cp /etc/ca/ca.crt /usr/local/share/ca-certificates/rea26-ca.crt
-update-ca-certificates
+cp /etc/ca/ca.crt /usr/local/share/ca-certificates/
+dpkg-reconfigure ca-certificates
 ```
 
 ---
