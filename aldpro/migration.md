@@ -3,20 +3,20 @@
 ## Необходимые данные
 |Домен        |Сервер |Адрес         |LDAP             |Уз Админа     |
 |-------------|-------|--------------|-----------------|--------------|
-|tech.skills  |win-ad |192.168.1.101 |Active Directory |Administrator |
+|tech.skills  |win-ad |192.168.1.15  |Active Directory |Administrator |
 |rea26.skills |cr-db  |192.168.1.10  |ALD Pro          |admin         |
 
 ---
 
 ## Шаг 1: Настройка IP-адреса на сервере AD
 1. Подключитесь к серверу `win-ad.tech.skills`
-2. Установите статический IP-адрес в соответствии с сетевой схемой учебного стенда (192.168.1.101)
+2. Установите статический IP-адрес в соответствии с сетевой схемой учебного стенда (192.168.1.15)
 ---
 
 ## Шаг 2: Отключение безопасности LDAP в групповых политиках
-1. В поисковеке набрать `Local Policies`, открыть `Local Policies`
+1. В поисковеке набрать `Local Security`, открыть `Local Security Options`
 2. В редакторе групповых политик перейдите в:
-   -  `Local Policies` → `Security Options`
+   -  `Local Security Options` → `Local Options` → `Security Options`
 3. Найдите и настройте следующие параметры:
    - **"Domain controller: LDAP server channel binding token requirements"** → `Never`
    - **"Domain controller: LDAP server signing requirements"** → `None`
@@ -30,7 +30,7 @@
 2. Перейдите в раздел DNS-настроек
 3. Добавьте новый форвардер:
    - **Домен:** `tech.skills`
-   - **IP-адрес:** `192.168.1.101`
+   - **IP-адрес:** `192.168.1.15`
 4. Сохраните настройки
 
 ---
