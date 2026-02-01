@@ -162,14 +162,6 @@ sudo systemctl enable postfix dovecot
 echo "Test message from Postfix" | mail -s "Test IMAP" eva@rea26.skills
 ```
 
-### 10.2. Проверка аутентификации Kerberos
-
-```bash
-# Получение билета для тестового пользователя
-kinit lori@REA26.SKILLS
-klist  # Просмотр полученного билета
-```
-
 ### 10.3. Проверка логов
 
 ```bash
@@ -188,13 +180,3 @@ sudo tail -f /var/log/mail.log
 6. Убедитесь, что письмо доставлено без запроса дополнительных параметров
 
 ---
-
-## Схема аутентификации
-
-```
-Почтовый клиент (Thunderbird)
-         │
-         ├── IMAP (порт 993) ──► Dovecot ──► GSSAPI ──► FreeIPA (Kerberos)
-         │
-         └── SMTP (порт 587) ──► Postfix ──► SASL/Dovecot ──► GSSAPI ──► FreeIPA
-```
