@@ -36,6 +36,7 @@
 - Напишите скрипт вызова утилиты snmpwalk на CR-SRV
 - apt install snmpwalk
 - !!! Его можно исползовать как шлюз для трафика с L2 на L3 !!!
+- apt install nftables frr tftpd-hpa snmpwalk postfix dovecot-imapd dovecot-pop3d astrase-fix-maildir rsyslog easy-rsa
 ### WIN-AD
 - Пользователей необходимо импортировать с доменного контроллера на хосте WIN-AD. После переноса пользователей выключите его.
 ### CR-CLI
