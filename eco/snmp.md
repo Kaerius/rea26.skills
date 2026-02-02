@@ -23,6 +23,18 @@ nano /bin/get_info
 chmod +x /bin/get_info
 ```
 
+
+```bash
+#!/bin/bash
+
+if [ "$1" = "--dump" ]; then
+    shift
+    snmpwalk -v3 -u snmpuser -l authNoPriv -a MD5 -A snmppass "$1" > "${1}_$(date +%Y%m%d_%H%M%S)_report.txt"
+else
+    snmpwalk -v3 -u snmpuser -l authNoPriv -a MD5 -A snmppass "$1"
+fi
+```
+
 ```bash
 #!/bin/bash
 
@@ -43,8 +55,8 @@ fi
 HOST="$1"
 FILE="${HOST}_$(date +%Y%m%d_%H%M%S)_report.txt"
 
-# Вызов snmpwalk для CR-SRV (предполагаем, что CR-SRV — это шлюз с доступом к устройству)
-CMD="snmpwalk -v2c -c public $HOST"
+# Вызов snmpwalk на CR-SRV 
+CMD="snmpwalk -v3 -u snmpuser -l authNoPriv -a MD5 -A snmppas $HOST"
 
 # Вывод в файл или на экран
 if [ $DUMP -eq 1 ]; then
