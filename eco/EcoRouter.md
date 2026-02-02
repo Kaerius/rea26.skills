@@ -366,20 +366,6 @@ ip sla-profile reaskills
  rtt-threshold 1000
 exit
 ```
-
-### SNMPv3 (все устройства)
-```bash
-snmp-server enable snmp
-snmp-server view view1 .1 included
-snmp-server group reaskills v3 auth read view1
-snmp-server user snmpuser group reaskills auth md5 snmppass
-```
-
-> **Доступ по SNMP:**  
-> - Группа: `reaskills`  
-> - Пользователь: `snmpuser` / Пароль: `snmppass` (настраивается на стороне клиента)  
-> - Доступ разрешен только из сети управления (VLAN 100)
-
 ---
 
 ## ✅ Финальная проверка
