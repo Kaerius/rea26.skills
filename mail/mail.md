@@ -40,7 +40,7 @@ sudo apt install postfix dovecot-imapd dovecot-pop3d astrase-fix-maildir
 ```bash
 # Копирование корневого сертификата в системное хранилище
 sudo cp /etc/ca/ca.crt /usr/local/share/ca-certificates/rea26-ca.crt
-sudo update-ca-certificates
+sudo dpkg-reconfigure ca-certificates
 ```
 
 Выдать права на сетрификаты (Добавить правильные права или скопировать серт)
