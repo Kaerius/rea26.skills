@@ -8,7 +8,7 @@
 ```bash
 # Обновление списка пакетов и установка почтового стека
 sudo apt update
-sudo apt install postfix dovecot-imapd
+sudo apt install postfix dovecot-imapd dovecot-pop3d astrase-fix-maildir
 ```
 
 > **При установке `postfix` выберите:**
@@ -24,7 +24,7 @@ sudo apt install postfix dovecot-imapd
 | **Тип конфигурации** | `2. Интернет-сайт` |
 | **Имя системы** | `rea26.skills` |
 | **Получатель почты для root** | (пусто) |
-| **Другие адреса для приёма почты** | `rea26.skills, mail.rea26.skills, localhost.rea26.skills, localhost` |
+| **Другие адреса для приёма почты** | `rea26.skills, mail.rea26.skills, localhost.rea26.skills, localhost, rea26.ru` |
 | **Принудительно задействовать синхронные обновления** | `Да` |
 | **Локальные сети** | `127.0.0.0/8, 192.168.1.0/24, 192.168.122.0/24` |
 | **Ограничение размера почтового ящика** | `0` (без ограничений) |
