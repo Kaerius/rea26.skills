@@ -22,83 +22,16 @@ $template RemLogs, "/opt/logs/%HOSTNAME%.log"
 
 ---
 
-### 1. Минимальный конфиг `/etc/logrotate.d/router`
-
-```bash
-/opt/logs/*.log {
-    size 10M
-    compress
-    copytruncate
-    missingok
-    notifempty
-}
+### Редактируем logrotate.timer командой systemctl edit logrotate.timer (подсмотерть можно выполнив команду systemctl --full edit logrotate.timer)
 ```
-
----
-
-### 2. Создайте кастомный сервис для ротации
-
-```bash
-sudo nano /etc/systemd/system/logrotate-remote.service
-```
-
-Содержимое:
-
-```ini
-[Unit]
-Description=Rotate remote logs (10MB threshold)
-
-[Service]
-Type=oneshot
-ExecStart=/usr/sbin/logrotate /etc/logrotate.d/router
-```
-
----
-
-### 3. Создайте таймер с интервалом 1 минута
-
-```bash
-sudo nano /etc/systemd/system/logrotate-router.timer
-```
-
-Содержимое:
-
-```ini
-[Unit]
-Description=Run remote log rotation every minute
-
 [Timer]
-OnBootSec=1min
-OnUnitActiveSec=1min
-AccuracySec=1s
-
-[Install]
-WantedBy=timers.target
+OnCalendar=*-*-* *:*00
+AccuracySec=1us
 ```
-
-> 🔑 `OnUnitActiveSec=1min` — запускать каждую минуту после завершения предыдущего запуска.
-
----
-
-### 4. Активируйте и запустите таймер
-
-```bash
-# Перечитать конфиги systemd
-sudo systemctl daemon-reload
-
-# Включить и запустить таймер
-sudo systemctl enable --now logrotate-router.timer
-
-# Проверить статус
-systemctl list-timers | grep logrotate
+### Перезапускаем службы logrotate rsyslog
 ```
-
-Ожидаемый вывод:
+systamctl restart logrotate rsyslog
 ```
-Mon 2026-02-02 16:05:23 MSK  23s left   Mon 2026-02-02 16:04:23 MSK  36s ago   logrotate-remote.timer logrotate-remote.service
-```
-
-
 
 # 3.5 Аккаунтинг (Syslog) (стр.38 ER_UserGuide.pdf 2018)
 
