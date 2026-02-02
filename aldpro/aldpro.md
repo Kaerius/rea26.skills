@@ -75,7 +75,7 @@ sudo astra-modeswitch getname
 - В обновленной системе устанавливаем ALD Pro с Syncer, с GC, но не настраиваем GC
 
 ```bash
-sudo apt install syslog-ng syslog-ng-mod-astra syslog-ng-mod-python astra-event-watcher aldpro-mp aldpro-syncer aldpro-gc libipa-aldpro
+sudo apt install aldpro-mp aldpro-syncer aldpro-gc
 ```
 - После установки перезагружаем хост
 
