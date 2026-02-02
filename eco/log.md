@@ -1,5 +1,9 @@
 # Настройка отправки логов с коммутаторов
 
+```bash
+apt install rsyslog
+```
+
 ## В файле `/etc/rsyslog.conf` раскоментируем раздел
 
 ```bash
@@ -22,6 +26,21 @@ $template RemLogs, "/opt/logs/%HOSTNAME%.log"
 
 ---
 
+
+## Добавим правло ротации логов
+
+`/etc/logrotate.d/remote-logs`
+
+```bash
+/opt/logs/*.log {
+    size 10M
+    compress
+    copytruncate
+    missingok
+    notifempty
+}
+```
+
 ### Редактируем logrotate.timer командой systemctl edit logrotate.timer (подсмотерть можно выполнив команду systemctl --full edit logrotate.timer)
 ```
 [Timer]
@@ -32,6 +51,16 @@ AccuracySec=1us
 ```
 systamctl restart logrotate rsyslog
 ```
+
+
+
+## Включить передачу логов с роутера
+```bash
+rsyslog host 192.168.100.13 vr default
+```
+
+
+
 
 # 3.5 Аккаунтинг (Syslog) (стр.38 ER_UserGuide.pdf 2018)
 
@@ -50,7 +79,4 @@ systamctl restart logrotate rsyslog
 В свою очередь, сообщения могут отправляться через management-порт mgmt или виртуальный маршрутизатор vr {default | <VR_NAME>}, где параметр VR_NAME является именем виртуального маршрутизатора, а default подразумевает стандартный (невиртуализированный) маршрутизатор.
 
 
-```bash
-rsyslog host 192.168.100.13 vr default
-```
 
