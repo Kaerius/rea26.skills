@@ -277,6 +277,8 @@ exit
 router ldp
  targeted-peer ipv4 3.3.3.3
   exit-targeted-peer-mode
+ targeted-peer ipv4 1.1.1.1
+  exit-targeted-peer-mode
  transport-address ipv4 2.2.2.2
 exit
 ```
@@ -285,6 +287,8 @@ exit
 ```bash
 router ldp
  targeted-peer ipv4 2.2.2.2
+  exit-targeted-peer-mode
+ targeted-peer ipv4 1.1.1.1
   exit-targeted-peer-mode
  transport-address ipv4 3.3.3.3
 exit
