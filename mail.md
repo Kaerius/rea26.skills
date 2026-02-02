@@ -53,71 +53,12 @@ sudo chmod 777 -R /etc/ca
 
 ---
 
-## Шаг 3: Настройка Postfix (`/etc/postfix/main.cf`)
+## Шаг 3: Настройка конфигурационных файлов
 
-```bash
-sudo nano /etc/postfix/main.cf
-```
+### **1. Файл: `conf.d/10-master.conf`**
 
-Добавьте/измените следующие параметры:
-
-```ini
-# === Основные параметры ===
-myhostname = cr-srv.rea26.skills
-mydomain = rea26.skills
-myorigin = $mydomain
-inet_interfaces = all
-mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
-mynetworks = 127.0.0.0/8, 192.168.1.0/24, 192.168.122.0/24
-
-# === TLS ===
-smtpd_tls_cert_file = /etc/ca/issued/rea26.crt
-smtpd_tls_key_file = /etc/ca/private/rea26.key
-smtpd_tls_CAfile = /etc/ca/ca.crt
-smtpd_use_tls = yes
-smtpd_tls_security_level = may
-smtpd_tls_auth_only = yes
-
-# === SASL через Dovecot ===
-smtpd_sasl_type = dovecot
-smtpd_sasl_path = private/auth
-smtpd_sasl_auth_enable = yes
-
-# === Формат почтовых ящиков ===
-home_mailbox = Maildir/
-mail_spool_directory = /var/mail
-
-# === Ограничения ===
-line_length_limit = 3072
-```
-
----
-
-## Шаг 4: Настройка Dovecot — аутентификация через GSSAPI
-
-### 4.1. Включить GSSAPI в `/etc/dovecot/conf.d/10-auth.conf`
-
-```bash
-sudo nano /etc/dovecot/conf.d/10-auth.conf
-```
-
-```ini
-disable_plaintext_auth = no
-auth_mechanisms = plain login
-```
-
-### 4.2. Настроить TLS (`/etc/dovecot/conf.d/10-ssl.conf`)
-
-```ini
-ssl = required
-ssl_cert = </etc/ca/issued/rea26.crt
-ssl_key = </etc/ca/private/rea26.key
-ssl_ca = </etc/ca/ca.crt
-```
-
-### 4.3. Настроить сокет аутентификации для Postfix (`/etc/dovecot/conf.d/10-master.conf`)
-
-Найдите секцию `service auth` и добавьте:
+- Раскоментируем строки с портами и SSL
+- Раскоментируем раздел unix_listener /var/spool/postfix/private/auth идобавлем Пользователя и группу postfix 
 
 ```ini
 service imap-login {
@@ -129,17 +70,80 @@ service imap-login {
     ssl = yes
   }
 }
-```
 
-### 4.4. Указать формат почтовых ящиков (`/etc/dovecot/conf.d/10-mail.conf`)
-
-```ini
-mail_location = maildir:~/Maildir
+unix_listener /var/spool/postfix/private/auth {
+  mode = 0666
+  user = postfix
+  group = postfix
+}
 ```
 
 ---
 
-## Шаг 5: Настройка DNS — MX запись
+### **2. Файл: `conf.d/10-auth.conf`**
+
+- Отключена опция disable_plaintext_auth (изменено с "yes" на "no")
+- Изменен механизм аутентификации с "plain" на "plain login"
+- Проверяем что раскомментированы параметры для аутентификации с использованием SASL
+
+```ini
+disable_plaintext_auth = no
+auth_mechanisms = plain login
+```
+
+---
+
+### **3. Файл: `main.cf`**
+
+- Обновлены TLS-параметры: заменены сертификаты snakeoil на rea26
+- Добавлен параметр mail_spool_directory = /var/maildir/
+- Установлен line_length_limit = 3072
+- Настроена интеграция с Dovecot: sasl_type = dovecot, sasl_auth_enable = yes параматры и из значения можно посмотреть в мане `man 5 postconf`
+
+```ini
+smtpd_tls_cert_file = /etc/ca/issued/rea26.crt
+smtpd_tls_key_file = /etc/ca/private/rea26.key
+smtpd_use_tls = yes
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+mail_spool_directory = /var/maildir/
+line_length_limit = 3072
+
+smtpd_sasl_type = dovecot
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_path = private/auth
+```
+
+---
+
+### **4. Файл: `conf.d/10-ssl.conf`**
+
+- Обновлены SSL-сертификаты для использования rea26 вместо snakeoil
+- Добавлен namespace для "Sent Messages" (отправленных сообщений)
+
+
+```ini
+ssl_cert = </etc/ca/issued/rea26.crt
+ssl_key = </etc/ca/private/rea26.key
+```
+
+---
+
+### **5. Файл: `conf.d/15-mailboxes.conf`**
+
+Добавлем auto = subscribe
+
+```ini
+namespace inbox {
+  mailbox "Sent Messages" {
+    special_use = \Sent
+    auto = subscribe
+  }
+}
+```
+
+## Шаг 4: Настройка DNS — MX запись
 
 На сервере `CR-DC` (BIND) добавьте в зону `rea26.skills` запись:
 
@@ -152,7 +156,7 @@ mail             IN  A   <IP_адрес_CR-SRV>
 
 ---
 
-## Шаг 6: Перезапуск служб
+## Шаг 5: Перезапуск служб
 
 ```bash
 sudo systemctl restart postfix dovecot
@@ -161,30 +165,31 @@ sudo systemctl enable postfix dovecot
 
 ---
 
-## Шаг 7: Проверка работоспособности
+## Шаг 6: Проверка работоспособности
 
-### 7.1. Проверка получения почты
 
-```bash
-# Отправка тестового письма локальному пользователю
-echo "Test message from Postfix" | mail -s "Test IMAP" eva@rea26.skills
-```
-
-### 7.2. Проверка логов
+### 6.1. Проверка конфигов
 
 ```bash
-# Просмотр логов в реальном времени
-sudo tail -f /var/log/mail.log
+postconf
 ```
 
-### 7.3. Тестирование с почтового клиента
+```bash
+dovconf
+```
 
-На клиенте `CR-CLI`:
-1. Откройте Thunderbird / Outlook
-2. Укажите адрес: `lori@rea26.skills`
-3. Введите пароль учётной записи домена
-4. Клиент автоматически определит параметры через автонастройку
-5. Отправьте письмо на `eva@rea26.skills` (BR-CLI)
-6. Убедитесь, что письмо доставлено без запроса дополнительных параметров
+### 6.2. Проверка получения почты
 
----
+Смотрим журнал на предмет ошибок
+
+```bash
+journalctl -u dovecot
+journalctl -u postfix
+```
+
+### 6.3. Проверка логов
+Авторизуемся в граике и настривам почу. 
+
+Проверяем путем отправки письма самаому себе.
+
+Не должно быть не ошибок не предупреждений, настройки должны подтянутся автоматом.
