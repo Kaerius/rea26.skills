@@ -1,7 +1,9 @@
 # Инструкция по настройке почтового сервера на CR-SRV
 ## Шаг 0: Установка необходимого ПО
 
-Делаем клиентом Домена! Чтобы доменые УЗ былыи локальными и не настривать ldap соедениение.
+Необходимо:
+- Быть участрником домена, команда `id admin` должна выдавать домены UID
+- Установлен центр сертификации и сформированы сертификаты
 
 ## Шаг 1: Установка необходимого ПО
 
@@ -103,16 +105,13 @@ auth_mechanisms = plain login
 ```ini
 smtpd_tls_cert_file = /etc/ca/issued/rea26.crt
 smtpd_tls_key_file = /etc/ca/private/rea26.key
-smtpd_use_tls = yes
-smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
-smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
 
 mail_spool_directory = /var/maildir/
 line_length_limit = 3072
 
 smtpd_sasl_type = dovecot
-smtpd_sasl_auth_enable = yes
 smtpd_sasl_path = private/auth
+smtpd_sasl_auth_enable = yes
 ```
 
 ---
@@ -188,7 +187,7 @@ journalctl -u postfix
 ```
 
 ### 6.3. Проверка логов
-Авторизуемся в граике и настривам почу. 
+Авторизуемся в графике и настривам почу. 
 
 Проверяем путем отправки письма самаому себе.
 
