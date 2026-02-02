@@ -17,7 +17,7 @@ input(type="imtcp" port="514")
 
 ## Создать правило приема логов
 
-К примеру файл `/etc/rsyslog.d/router.conf` со следующем содержимиым
+К примеру файл `/etc/rsyslog.d/remote-logs.conf` со следующем содержимиым
 
 ```bash
 $template RemLogs, "/opt/logs/%HOSTNAME%.log"
