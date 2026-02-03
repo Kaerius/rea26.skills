@@ -44,7 +44,7 @@ $template RemLogs, "/opt/logs/%HOSTNAME%.log"
 ### Редактируем logrotate.timer командой systemctl edit logrotate.timer (подсмотерть можно выполнив команду systemctl --full edit logrotate.timer)
 ```
 [Timer]
-OnCalendar=*-*-* *:*00
+#OnCalendar=*-*-* *:*00
 OnCalendar=*:0/1
 AccuracySec=1s
 ```
