@@ -45,7 +45,8 @@ $template RemLogs, "/opt/logs/%HOSTNAME%.log"
 ```
 [Timer]
 OnCalendar=*-*-* *:*00
-AccuracySec=1us
+OnCalendar=*:0/1
+AccuracySec=1s
 ```
 ### Перезапускаем службы logrotate rsyslog
 ```
