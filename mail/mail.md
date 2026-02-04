@@ -130,7 +130,7 @@ ssl_key = </etc/ca/private/rea26.key
 
 ---
 
-### **5. Файл: `conf.d/15-mailboxes.conf`**
+### **5. Файл: `conf.d/15-mailboxes.conf` (dovecot)**
 
 Добавлем auto = subscribe
 
