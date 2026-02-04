@@ -217,7 +217,7 @@ Web Application Proxy → Publish → Publish new application through AD FS
 → Next → Publish
 ```
 
-#### 4.4 Включение аутентификации по сертификату (опционально)
+#### 4.4 Включение аутентификации по сертификату
 ```
 IIS Manager → Sites → Default Web Site → SSL Settings
 → ✅ Require SSL → Client certificates: Accept → Apply
