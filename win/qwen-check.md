@@ -73,13 +73,13 @@ Register-ScheduledTask -TaskName "CRL_Sync" -Action $action -Trigger $trigger -U
 ```
 certsrv.msc → ПКМ на REA2026-CA → Properties
 → Extensions → CDP → Add...
-   http://crl.rea26.ru/crl/%3%8.crl
+   http://crl.rea2026.ru/crl/%3%8.crl
    ✅ Include in the CDP extension of issued certificates
    ❌ Publish CRLs to this location
 → Apply
 
 → Extensions → AIA → Add...
-   http://crl.rea26.ru/cert/%3%8.crt
+   http://crl.rea2026.ru/cert/%3%8.crt
    ✅ Include in the AIA extension of issued certificates
    ❌ Publish certificates to this location
 → Apply → OK
@@ -97,8 +97,8 @@ dir C:\CertEnroll\*.crl
 dir C:\inetpub\wwwroot\crl\*.crl
 
 # На CLI-EXT:
-nslookup crl.rea26.ru
-curl http://crl.rea26.ru/crl/
+nslookup crl.rea2026.ru
+curl http://crl.rea2026.ru/crl/
 ```
 
 ---
@@ -422,7 +422,7 @@ certmgr.msc → Personal → Certificates → All Tasks → Request New Certific
 | Edge стартовая страница | CLI-INT | `gpupdate /force` → запустить Edge |
 | RDP-ярлык изнутри | CLI-INT | Двойной клик по ярлыку MAX на рабочем столе |
 | SSO RDS изнутри | CLI-INT | Браузер → `https://rds.reaskills2026.local` |
-| CRL извне | CLI-EXT | `nslookup crl.rea26.ru` → `curl http://crl.rea26.ru/crl/` |
+| CRL извне | CLI-EXT | `nslookup crl.rea2026.ru` → `curl http://crl.rea2026.ru/crl/` |
 | Внешний доступ | CLI-EXT | Браузер → `https://rdweb.rea26.ru` → вход → скачать .rdp |
 | RDP извне | CLI-EXT | Запустить скачанный .rdp файл |
 | Аутентификация по сертификату | CLI-EXT | В браузере выбрать сертификат при входе в ADFS |
@@ -433,7 +433,7 @@ certmgr.msc → Personal → Certificates → All Tasks → Request New Certific
 
 ```
 [ ] Имя ЦС: REA2026-CA
-[ ] CRL: http://crl.rea26.ru/crl/ доступен из CLI-EXT
+[ ] CRL: http://crl.rea2026.ru/crl/ доступен из CLI-EXT
 [ ] ADFS имя портала: REA ADFS (в заголовке страницы)
 [ ] ADFS: проверка CRL включена (Set-AdfsProperties -EnableCRLChecking $true)
 [ ] Внешние имена: adfs.rea2026.ru, rdweb.rea2026.ru (НЕ .local!)
