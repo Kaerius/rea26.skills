@@ -134,6 +134,8 @@ ssl_key = </etc/ca/private/rea26.key
 
 Добавлем auto = subscribe
 
+Этот параметр автоматически подписывает пользователя на почтовый ящик (mailbox) при первом подключении к серверу через IMAP/POP3. 
+
 ```ini
 namespace inbox {
   mailbox "Sent Messages" {
