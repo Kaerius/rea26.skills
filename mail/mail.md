@@ -57,7 +57,7 @@ sudo chmod 777 -R /etc/ca
 
 ## Шаг 3: Настройка конфигурационных файлов
 
-### **1. Файл: `conf.d/10-master.conf`**
+### **1. Файл: `conf.d/10-master.conf` (dovecot)**
 
 - Раскоментируем строки с портами и SSL
 - Раскоментируем раздел unix_listener /var/spool/postfix/private/auth идобавлем Пользователя и группу postfix 
@@ -82,7 +82,7 @@ unix_listener /var/spool/postfix/private/auth {
 
 ---
 
-### **2. Файл: `conf.d/10-auth.conf`**
+### **2. Файл: `conf.d/10-auth.conf` (dovecot)**
 
 - Отключена опция disable_plaintext_auth (изменено с "yes" на "no")
 - Изменен механизм аутентификации с "plain" на "plain login"
@@ -95,12 +95,13 @@ auth_mechanisms = plain login
 
 ---
 
-### **3. Файл: `main.cf`**
+### **3. Файл: `main.cf` (postfix)**
 
 - Обновлены TLS-параметры: заменены сертификаты snakeoil на rea26
 - Добавлен параметр mail_spool_directory = /var/maildir/
 - Установлен line_length_limit = 3072
 - Настроена интеграция с Dovecot: sasl_type = dovecot, sasl_auth_enable = yes параматры и из значения можно посмотреть в мане `man 5 postconf`
+- `private/auth` для `postfix` берется из конфигов `dovecot` выше `/var/spool/postfix/private/auth`
 
 ```ini
 smtpd_tls_cert_file = /etc/ca/issued/rea26.crt
@@ -116,7 +117,7 @@ smtpd_sasl_auth_enable = yes
 
 ---
 
-### **4. Файл: `conf.d/10-ssl.conf`**
+### **4. Файл: `conf.d/10-ssl.conf` (dovecot)**
 
 - Обновлены SSL-сертификаты для использования rea26 вместо snakeoil
 - Добавлен namespace для "Sent Messages" (отправленных сообщений)
